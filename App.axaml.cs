@@ -15,7 +15,6 @@ public partial class App : Application
     {
         // Initialize logger early
         _ = Logger.Instance;
-        Logger.Instance.Information("Application initializing...");
 
         AvaloniaXamlLoader.Load(this);
     }

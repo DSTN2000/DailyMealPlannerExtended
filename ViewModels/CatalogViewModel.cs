@@ -9,6 +9,8 @@ namespace DailyMealPlannerExtended.ViewModels;
 public partial class CatalogViewModel : ViewModelBase
 {
     private readonly DatabaseService _databaseService;
+    private CancellationTokenSource? _searchDebounceTokenSource;
+    private string? _lastSearchedText;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -59,20 +61,17 @@ public partial class CatalogViewModel : ViewModelBase
 
     public CatalogViewModel()
     {
-        Logger.Instance.Information("CatalogViewModel constructor called");
         _databaseService = new DatabaseService();
         _ = InitializeAsync();
     }
 
     private async Task InitializeAsync()
     {
-        Logger.Instance.Information("CatalogViewModel InitializeAsync started");
         try
         {
             await LoadTypesAsync();
             await LoadLabelsAsync();
             await SearchAsync();
-            Logger.Instance.Information("CatalogViewModel InitializeAsync completed");
         }
         catch (Exception ex)
         {
@@ -123,7 +122,6 @@ public partial class CatalogViewModel : ViewModelBase
 
     private async Task LoadProductsAsync()
     {
-        Logger.Instance.Information("LoadProductsAsync started - Page: {Page}", CurrentPage);
         IsLoading = true;
         try
         {
@@ -134,20 +132,28 @@ public partial class CatalogViewModel : ViewModelBase
                 page: CurrentPage
             );
 
-            Logger.Instance.Information("Received {Count} products, totalCount: {TotalCount}", products.Count, totalCount);
-
             Products.Clear();
             foreach (var product in products)
             {
                 Products.Add(product);
             }
 
-            TotalCount = totalCount;
-            TotalPages = (int)Math.Ceiling((double)totalCount / PageSize);
+            // For search queries, the total count should reflect actual matches
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                // When searching, we fetch PageSize * 10, filter by relevance, then paginate
+                // So the total is based on the pre-filtered count
+                TotalCount = totalCount;
+                TotalPages = (int)Math.Ceiling((double)totalCount / PageSize);
+            }
+            else
+            {
+                TotalCount = totalCount;
+                TotalPages = (int)Math.Ceiling((double)totalCount / PageSize);
+            }
+
             HasPreviousPage = CurrentPage > 0;
             HasNextPage = CurrentPage < TotalPages - 1;
-
-            Logger.Instance.Information("LoadProductsAsync completed - Products: {Count}, TotalPages: {TotalPages}", Products.Count, TotalPages);
         }
         catch (Exception ex)
         {
@@ -220,8 +226,29 @@ public partial class CatalogViewModel : ViewModelBase
 
     partial void OnSearchTextChanged(string value)
     {
-        // Debounce search - search when user stops typing
-        _ = SearchAsync();
+        // Cancel previous debounce
+        _searchDebounceTokenSource?.Cancel();
+        _searchDebounceTokenSource = new CancellationTokenSource();
+        var token = _searchDebounceTokenSource.Token;
+        var searchValue = value; // Capture current value
+
+        // Debounce: wait 300ms before searching
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(300, token);
+                if (!token.IsCancellationRequested && _lastSearchedText != searchValue)
+                {
+                    _lastSearchedText = searchValue;
+                    await SearchAsync();
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected when user types again
+            }
+        });
     }
 
     partial void OnSelectedTypeChanged(string? value)

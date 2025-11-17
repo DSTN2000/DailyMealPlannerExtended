@@ -19,8 +19,10 @@ public class DatabaseService : IDisposable
         var dbPath = Path.Combine(appDataDir, "opennutrition_foods.db");
         _connectionString = $"Data Source={dbPath}";
 
-        Logger.Instance.Information("DatabaseService initialized with path: {DbPath}", dbPath);
-        Logger.Instance.Information("Database file exists: {Exists}", File.Exists(dbPath));
+        if (!File.Exists(dbPath))
+        {
+            Logger.Instance.Error("Database file not found at: {DbPath}", dbPath);
+        }
     }
 
     private static string GetAppDataDirectory()
@@ -72,15 +74,19 @@ public class DatabaseService : IDisposable
         List<string>? labels = null,
         int page = 0)
     {
-        Logger.Instance.Debug("SearchProductsAsync called - searchText: {SearchText}, type: {Type}, labels: {Labels}, page: {Page}",
-            searchText, type, labels?.Count ?? 0, page);
-
         var connection = await GetConnectionAsync();
         var products = new List<Product>();
 
         // Build the WHERE clause
         var whereClauses = new List<string> { "1=1" };
         var parameters = new List<SqliteParameter>();
+
+        // Add search filter - only match name or ingredients
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            whereClauses.Add("(name LIKE @search OR ingredients LIKE @search OR alternate_names LIKE @search)");
+            parameters.Add(new SqliteParameter("@search", $"%{searchText}%"));
+        }
 
         if (!string.IsNullOrWhiteSpace(type))
         {
@@ -103,27 +109,28 @@ public class DatabaseService : IDisposable
 
         // Get total count
         var countQuery = $"SELECT COUNT(*) FROM opennutrition_foods WHERE {whereClause}";
-        Logger.Instance.Debug("Count query: {Query}", countQuery);
         using var countCommand = new SqliteCommand(countQuery, connection);
         countCommand.Parameters.AddRange(parameters.ToArray());
         var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync());
-        Logger.Instance.Information("Total count: {TotalCount}", totalCount);
 
-        // Get products (we'll get more for relevance sorting if search text is provided)
-        var limit = string.IsNullOrWhiteSpace(searchText) ? PageSize : PageSize * 10;
-        var offset = string.IsNullOrWhiteSpace(searchText) ? page * PageSize : 0;
-
-        var query = $@"
-            SELECT id, name, alternate_names, description, type, serving, nutrition_100g, labels, ingredients
-            FROM opennutrition_foods
-            WHERE {whereClause}
-            LIMIT {limit} OFFSET {offset}";
-
-        Logger.Instance.Debug("Products query: {Query}, limit: {Limit}, offset: {Offset}", query, limit, offset);
+        // When searching, fetch ALL matching products for relevance sorting
+        // Otherwise, use pagination normally
+        var query = string.IsNullOrWhiteSpace(searchText)
+            ? $@"SELECT id, name, alternate_names, description, type, serving, nutrition_100g, labels, ingredients
+                 FROM opennutrition_foods
+                 WHERE {whereClause}
+                 LIMIT {PageSize} OFFSET {page * PageSize}"
+            : $@"SELECT id, name, alternate_names, description, type, serving, nutrition_100g, labels, ingredients
+                 FROM opennutrition_foods
+                 WHERE {whereClause}";
 
         using var command = new SqliteCommand(query, connection);
         // Re-create parameters for the second query
         var queryParameters = new List<SqliteParameter>();
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            queryParameters.Add(new SqliteParameter("@search", $"%{searchText}%"));
+        }
         if (!string.IsNullOrWhiteSpace(type))
         {
             queryParameters.Add(new SqliteParameter("@type", type));
@@ -148,16 +155,15 @@ public class DatabaseService : IDisposable
             }
         }
 
-        Logger.Instance.Information("Retrieved {Count} products from database", products.Count);
-
         // Sort by relevance if search text provided
         if (!string.IsNullOrWhiteSpace(searchText))
         {
-            Logger.Instance.Debug("Sorting by relevance for search text: {SearchText}", searchText);
             products = SortByRelevance(products, searchText);
+            // When searching, return the count of matched products, not total DB count
+            var searchResultCount = products.Count;
             // Apply pagination after sorting
             products = products.Skip(page * PageSize).Take(PageSize).ToList();
-            Logger.Instance.Debug("After pagination: {Count} products", products.Count);
+            return (products, searchResultCount);
         }
 
         return (products, totalCount);
@@ -265,16 +271,12 @@ public class DatabaseService : IDisposable
         var searchLower = searchText.ToLower();
         var levenshtein = new Levenshtein(searchLower);
 
+        Logger.Instance.Information("Search: '{SearchText}'", searchText);
+
         var scored = products.Select(p =>
         {
-            // Calculate distance for name
-            var nameDistance = levenshtein.DistanceFrom(p.Name.ToLower());
-
-            // Check alt names if they exist
-            var altNameDistance = p.AltNames?.Select(alt => levenshtein.DistanceFrom(alt.ToLower())).Min() ?? int.MaxValue;
-
-            // Use the minimum distance
-            var distance = Math.Min(nameDistance, altNameDistance);
+            // Calculate distance based on product name only
+            var distance = levenshtein.DistanceFrom(p.Name.ToLower());
 
             // Boost exact matches and prefix matches
             if (p.Name.Equals(searchText, StringComparison.OrdinalIgnoreCase))
@@ -287,10 +289,15 @@ public class DatabaseService : IDisposable
             return new { Product = p, Distance = distance };
         })
         .OrderBy(x => x.Distance)
-        .Select(x => x.Product)
         .ToList();
 
-        return scored;
+        // Log top 5 results with scores
+        foreach (var item in scored.Take(5))
+        {
+            Logger.Instance.Information("  [{Score,4}] {Name}", item.Distance, item.Product.Name);
+        }
+
+        return scored.Select(x => x.Product).ToList();
     }
 
     public async Task<List<string>> GetTypesAsync()
