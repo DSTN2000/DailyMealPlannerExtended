@@ -1,16 +1,19 @@
 using System.Collections.ObjectModel;
+using System.Threading;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DailyMealPlannerExtended.Services;
 using Lab4.Models;
+using System;
+using System.Linq;
 
 namespace DailyMealPlannerExtended.ViewModels;
 
 public partial class CatalogViewModel : ViewModelBase
 {
     private readonly DatabaseService _databaseService;
-    private CancellationTokenSource? _searchDebounceTokenSource;
-    private string? _lastSearchedText;
+    private CancellationTokenSource? _searchDebounceCts;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -120,17 +123,22 @@ public partial class CatalogViewModel : ViewModelBase
         await LoadProductsAsync();
     }
 
-    private async Task LoadProductsAsync()
+    private async Task LoadProductsAsync(CancellationToken token = default)
     {
         IsLoading = true;
         try
         {
-            var (products, totalCount) = await _databaseService.SearchProductsAsync(
-                searchText: SearchText,
-                type: SelectedType,
-                labels: SelectedLabels.ToList(),
-                page: CurrentPage
-            );
+            var (products, totalCount) = await Task.Run(async () =>
+            {
+                var result = await _databaseService.SearchProductsAsync(
+                    searchText: SearchText,
+                    type: SelectedType,
+                    labels: SelectedLabels.ToList(),
+                    page: CurrentPage
+                );
+                token.ThrowIfCancellationRequested();
+                return result;
+            }, token);
 
             Products.Clear();
             foreach (var product in products)
@@ -154,6 +162,10 @@ public partial class CatalogViewModel : ViewModelBase
 
             HasPreviousPage = CurrentPage > 0;
             HasNextPage = CurrentPage < TotalPages - 1;
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when a new search is initiated
         }
         catch (Exception ex)
         {
@@ -201,7 +213,7 @@ public partial class CatalogViewModel : ViewModelBase
         SearchText = string.Empty;
         SelectedType = null;
         SelectedLabels.Clear();
-        _ = SearchAsync();
+        _ = SearchCommand.ExecuteAsync(null);
     }
 
     [RelayCommand]
@@ -210,7 +222,7 @@ public partial class CatalogViewModel : ViewModelBase
         if (!SelectedLabels.Contains(label))
         {
             SelectedLabels.Add(label);
-            _ = SearchAsync();
+            _ = SearchCommand.ExecuteAsync(null);
         }
     }
 
@@ -220,39 +232,36 @@ public partial class CatalogViewModel : ViewModelBase
         if (SelectedLabels.Contains(label))
         {
             SelectedLabels.Remove(label);
-            _ = SearchAsync();
+            _ = SearchCommand.ExecuteAsync(null);
         }
     }
 
     partial void OnSearchTextChanged(string value)
     {
-        // Cancel previous debounce
-        _searchDebounceTokenSource?.Cancel();
-        _searchDebounceTokenSource = new CancellationTokenSource();
-        var token = _searchDebounceTokenSource.Token;
-        var searchValue = value; // Capture current value
+        DebouncedSearch();
+    }
 
-        // Debounce: wait 300ms before searching
-        _ = Task.Run(async () =>
+    private async void DebouncedSearch()
+    {
+        try
         {
-            try
-            {
-                await Task.Delay(300, token);
-                if (!token.IsCancellationRequested && _lastSearchedText != searchValue)
-                {
-                    _lastSearchedText = searchValue;
-                    await SearchAsync();
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                // Expected when user types again
-            }
-        });
+            _searchDebounceCts?.Cancel();
+            _searchDebounceCts = new CancellationTokenSource();
+            var token = _searchDebounceCts.Token;
+
+            await Task.Delay(300, token);
+
+            CurrentPage = 0;
+            await LoadProductsAsync(token);
+        }
+        catch (OperationCanceledException)
+        {
+            // This is expected when the user types quickly.
+        }
     }
 
     partial void OnSelectedTypeChanged(string? value)
     {
-        _ = SearchAsync();
+        _ = SearchCommand.ExecuteAsync(null);
     }
 }
