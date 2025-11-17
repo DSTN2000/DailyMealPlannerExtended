@@ -177,6 +177,7 @@ public class DatabaseService : IDisposable
             var nutrition = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(nutritionJson)
                 ?? new Dictionary<string, JsonElement>();
 
+            var (q, u) = ParseServing(reader.IsDBNull(5) ? null : reader.GetString(5));
             var product = new Product
             {
                 Id = reader.GetString(0),
@@ -184,7 +185,8 @@ public class DatabaseService : IDisposable
                 AltNames = ParseJsonStringList(reader.IsDBNull(2) ? null : reader.GetString(2)),
                 Description = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
                 Category = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                Serving = ParseServing(reader.IsDBNull(5) ? null : reader.GetString(5)),
+                Serving = q,
+                Unit = u,
                 Labels = ParseJsonStringList(reader.IsDBNull(7) ? null : reader.GetString(7)),
                 Ingredients = ParseJsonStringList(reader.IsDBNull(8) ? null : reader.GetString(8)),
 
@@ -219,14 +221,15 @@ public class DatabaseService : IDisposable
         return 0.0;
     }
 
-    private double ParseServing(string? servingJson)
+    private (double q, ServingUnit u) ParseServing(string? servingJson)
     {
         if (string.IsNullOrWhiteSpace(servingJson))
-            return 100.0;
+            return (100.0, ServingUnit.g);
 
         try
         {
             var serving = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(servingJson);
+            double q = 0.0;
             if (serving != null && serving.TryGetValue("metric", out var metric))
             {
                 if (metric.ValueKind == JsonValueKind.Object)
@@ -236,7 +239,15 @@ public class DatabaseService : IDisposable
                     {
                         if (quantity.ValueKind == JsonValueKind.Number)
                         {
-                            return quantity.GetDouble();
+                            q = quantity.GetDouble();
+                        }
+                    }
+
+                    if (metricObj != null && metricObj.TryGetValue("unit", out var unit))
+                    {
+                        if (unit.ValueKind == JsonValueKind.String)
+                        {
+                            return unit.GetString() == "g" ? (q, ServingUnit.g) : (q, ServingUnit.ml);
                         }
                     }
                 }
@@ -247,7 +258,7 @@ public class DatabaseService : IDisposable
             // Fall back to default
         }
 
-        return 100.0;
+        return (100.0, ServingUnit.g);
     }
 
     private List<string> ParseJsonStringList(string? json)

@@ -11,7 +11,8 @@ public class Product
     public List<string>? AltNames { get; set; } = null;
 
 
-    public double Serving {get; set; } // in g/ml
+    public double Serving { get; set; } // in g/ml
+    public ServingUnit Unit { get; set; }
 
     // Nutritional data per 100g
     public double Calories { get; set; }
@@ -25,4 +26,10 @@ public class Product
     public double Sugar { get; set; }
 
     public Product() { }
+}
+
+public enum ServingUnit
+{
+    g,
+    ml
 }
