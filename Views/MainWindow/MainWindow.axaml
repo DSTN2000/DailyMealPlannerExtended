@@ -1,15 +1,18 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+        xmlns:views="using:DailyMealPlannerExtended.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:Material.Styles.Controls;assembly=Material.Styles"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
         x:Class="DailyMealPlannerExtended.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="DailyMealPlannerExtended">
+        Title="DailyMealPlannerExtended"
+        Width="1400"
+        Height="900">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -22,7 +25,7 @@
             <TabItem.Header>
                 <materialIcons:MaterialIcon Kind="BookOpen" Width="24" Height="24" />
             </TabItem.Header>
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Catalog Page"/>
+            <views:Catalog />
         </TabItem>
         <TabItem ToolTip.Tip="Meal Plan" ToolTip.Placement="Right">
             <TabItem.Header>

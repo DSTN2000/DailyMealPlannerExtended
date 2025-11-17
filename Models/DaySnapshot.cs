@@ -4,6 +4,6 @@ using Lab4.Models;
 
 public class DaySnapshot
 {
-    public DailyMealPlan MealPlan {get; set;}
-    public User UserPreferences {get; set;}
+    public required DailyMealPlan MealPlan {get; set;}
+    public required User UserPreferences {get; set;}
 }
