@@ -38,10 +38,14 @@ public partial class CatalogViewModel : ViewModelBase
     private int _totalCount;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CurrentPageDisplay))]
     private int _currentPage;
 
     [ObservableProperty]
     private int _totalPages;
+
+    // Display page numbers starting from 1 instead of 0
+    public int CurrentPageDisplay => CurrentPage + 1;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(PreviousPageCommand))]
@@ -55,15 +59,25 @@ public partial class CatalogViewModel : ViewModelBase
 
     public CatalogViewModel()
     {
+        Logger.Instance.Information("CatalogViewModel constructor called");
         _databaseService = new DatabaseService();
         _ = InitializeAsync();
     }
 
     private async Task InitializeAsync()
     {
-        await LoadTypesAsync();
-        await LoadLabelsAsync();
-        await SearchAsync();
+        Logger.Instance.Information("CatalogViewModel InitializeAsync started");
+        try
+        {
+            await LoadTypesAsync();
+            await LoadLabelsAsync();
+            await SearchAsync();
+            Logger.Instance.Information("CatalogViewModel InitializeAsync completed");
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Error in InitializeAsync");
+        }
     }
 
     private async Task LoadTypesAsync()
@@ -109,6 +123,7 @@ public partial class CatalogViewModel : ViewModelBase
 
     private async Task LoadProductsAsync()
     {
+        Logger.Instance.Information("LoadProductsAsync started - Page: {Page}", CurrentPage);
         IsLoading = true;
         try
         {
@@ -118,6 +133,8 @@ public partial class CatalogViewModel : ViewModelBase
                 labels: SelectedLabels.ToList(),
                 page: CurrentPage
             );
+
+            Logger.Instance.Information("Received {Count} products, totalCount: {TotalCount}", products.Count, totalCount);
 
             Products.Clear();
             foreach (var product in products)
@@ -129,10 +146,12 @@ public partial class CatalogViewModel : ViewModelBase
             TotalPages = (int)Math.Ceiling((double)totalCount / PageSize);
             HasPreviousPage = CurrentPage > 0;
             HasNextPage = CurrentPage < TotalPages - 1;
+
+            Logger.Instance.Information("LoadProductsAsync completed - Products: {Count}, TotalPages: {TotalPages}", Products.Count, TotalPages);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error searching products: {ex.Message}");
+            Logger.Instance.Error(ex, "Error searching products");
         }
         finally
         {

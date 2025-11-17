@@ -18,6 +18,9 @@ public class DatabaseService : IDisposable
         var appDataDir = GetAppDataDirectory();
         var dbPath = Path.Combine(appDataDir, "opennutrition_foods.db");
         _connectionString = $"Data Source={dbPath}";
+
+        Logger.Instance.Information("DatabaseService initialized with path: {DbPath}", dbPath);
+        Logger.Instance.Information("Database file exists: {Exists}", File.Exists(dbPath));
     }
 
     private static string GetAppDataDirectory()
@@ -69,6 +72,9 @@ public class DatabaseService : IDisposable
         List<string>? labels = null,
         int page = 0)
     {
+        Logger.Instance.Debug("SearchProductsAsync called - searchText: {SearchText}, type: {Type}, labels: {Labels}, page: {Page}",
+            searchText, type, labels?.Count ?? 0, page);
+
         var connection = await GetConnectionAsync();
         var products = new List<Product>();
 
@@ -97,9 +103,11 @@ public class DatabaseService : IDisposable
 
         // Get total count
         var countQuery = $"SELECT COUNT(*) FROM opennutrition_foods WHERE {whereClause}";
+        Logger.Instance.Debug("Count query: {Query}", countQuery);
         using var countCommand = new SqliteCommand(countQuery, connection);
         countCommand.Parameters.AddRange(parameters.ToArray());
         var totalCount = Convert.ToInt32(await countCommand.ExecuteScalarAsync());
+        Logger.Instance.Information("Total count: {TotalCount}", totalCount);
 
         // Get products (we'll get more for relevance sorting if search text is provided)
         var limit = string.IsNullOrWhiteSpace(searchText) ? PageSize : PageSize * 10;
@@ -110,6 +118,8 @@ public class DatabaseService : IDisposable
             FROM opennutrition_foods
             WHERE {whereClause}
             LIMIT {limit} OFFSET {offset}";
+
+        Logger.Instance.Debug("Products query: {Query}, limit: {Limit}, offset: {Offset}", query, limit, offset);
 
         using var command = new SqliteCommand(query, connection);
         // Re-create parameters for the second query
@@ -138,12 +148,16 @@ public class DatabaseService : IDisposable
             }
         }
 
+        Logger.Instance.Information("Retrieved {Count} products from database", products.Count);
+
         // Sort by relevance if search text provided
         if (!string.IsNullOrWhiteSpace(searchText))
         {
+            Logger.Instance.Debug("Sorting by relevance for search text: {SearchText}", searchText);
             products = SortByRelevance(products, searchText);
             // Apply pagination after sorting
             products = products.Skip(page * PageSize).Take(PageSize).ToList();
+            Logger.Instance.Debug("After pagination: {Count} products", products.Count);
         }
 
         return (products, totalCount);
@@ -182,7 +196,7 @@ public class DatabaseService : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error parsing product: {ex.Message}");
+            Logger.Instance.Error(ex, "Error parsing product");
             return null;
         }
     }

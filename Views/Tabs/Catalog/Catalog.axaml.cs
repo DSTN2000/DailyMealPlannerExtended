@@ -9,6 +9,8 @@ public partial class Catalog : UserControl
     public Catalog()
     {
         InitializeComponent();
+        Logger.Instance.Information("Catalog view constructor called");
+        DataContext = new CatalogViewModel();
     }
 
     private void OnLabelSelected(object? sender, SelectionChangedEventArgs e)

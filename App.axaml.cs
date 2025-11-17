@@ -13,6 +13,10 @@ public partial class App : Application
 {
     public override void Initialize()
     {
+        // Initialize logger early
+        _ = Logger.Instance;
+        Logger.Instance.Information("Application initializing...");
+
         AvaloniaXamlLoader.Load(this);
     }
 
