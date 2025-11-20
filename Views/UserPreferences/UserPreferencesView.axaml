@@ -1,0 +1,336 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             xmlns:models="using:Lab4.Models"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="DailyMealPlannerExtended.Views.UserPreferences.UserPreferencesView"
+             x:DataType="vm:UserPreferencesViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <vm:UserPreferencesViewModel/>
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Margin="32" Spacing="24" MaxWidth="800">
+            <!-- Header -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="User Preferences"
+                          FontSize="32"
+                          FontWeight="Bold"/>
+                <TextBlock Text="Configure your personal information and dietary goals"
+                          FontSize="14"
+                          Opacity="0.7"/>
+            </StackPanel>
+
+            <!-- Personal Information -->
+            <Border CornerRadius="16"
+                   Background="{DynamicResource MaterialCardBackgroundBrush}"
+                   BorderThickness="1"
+                   BorderBrush="{DynamicResource MaterialDividerBrush}"
+                   Padding="24">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Personal Information"
+                              FontSize="20"
+                              FontWeight="SemiBold"/>
+
+                    <!-- Weight -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Weight (kg)"
+                                  FontSize="14"
+                                  FontWeight="Medium"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Slider Grid.Column="0"
+                                   Minimum="30"
+                                   Maximum="200"
+                                   Value="{Binding User.Weight, Mode=TwoWay}"
+                                   TickFrequency="1"
+                                   IsSnapToTickEnabled="True"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="{Binding User.Weight, StringFormat='{}{0:F0} kg'}"
+                                      FontSize="14"
+                                      FontWeight="SemiBold"
+                                      VerticalAlignment="Center"
+                                      Margin="16,0,0,0"
+                                      MinWidth="60"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Height -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Height (cm)"
+                                  FontSize="14"
+                                  FontWeight="Medium"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Slider Grid.Column="0"
+                                   Minimum="120"
+                                   Maximum="220"
+                                   Value="{Binding User.Height, Mode=TwoWay}"
+                                   TickFrequency="1"
+                                   IsSnapToTickEnabled="True"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="{Binding User.Height, StringFormat='{}{0:F0} cm'}"
+                                      FontSize="14"
+                                      FontWeight="SemiBold"
+                                      VerticalAlignment="Center"
+                                      Margin="16,0,0,0"
+                                      MinWidth="60"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Age -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Age (years)"
+                                  FontSize="14"
+                                  FontWeight="Medium"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Slider Grid.Column="0"
+                                   Minimum="13"
+                                   Maximum="100"
+                                   Value="{Binding User.Age, Mode=TwoWay}"
+                                   TickFrequency="1"
+                                   IsSnapToTickEnabled="True"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="{Binding User.Age, StringFormat='{}{0:F0} years'}"
+                                      FontSize="14"
+                                      FontWeight="SemiBold"
+                                      VerticalAlignment="Center"
+                                      Margin="16,0,0,0"
+                                      MinWidth="60"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Activity Level -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Activity Level"
+                                  FontSize="14"
+                                  FontWeight="Medium"/>
+                        <ComboBox ItemsSource="{Binding ActivityLevels}"
+                                 SelectedItem="{Binding User.ActivityLevel, Mode=TwoWay}"
+                                 HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="models:ActivityLevel">
+                                    <TextBlock Text="{Binding}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Calculated Metrics -->
+            <Border CornerRadius="16"
+                   Background="{DynamicResource MaterialCardBackgroundBrush}"
+                   BorderThickness="1"
+                   BorderBrush="{DynamicResource MaterialDividerBrush}"
+                   Padding="24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Your Metrics"
+                              FontSize="20"
+                              FontWeight="SemiBold"/>
+
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="24" RowSpacing="16">
+                        <!-- BMI -->
+                        <Border Grid.Row="0" Grid.Column="0"
+                               CornerRadius="12"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="16">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="BMI"
+                                          FontSize="12"
+                                          Opacity="0.6"/>
+                                <TextBlock Text="{Binding User.BMI, StringFormat='{}{0:F1}'}"
+                                          FontSize="24"
+                                          FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- BMR -->
+                        <Border Grid.Row="0" Grid.Column="1"
+                               CornerRadius="12"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="16">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="BMR (kcal/day)"
+                                          FontSize="12"
+                                          Opacity="0.6"/>
+                                <TextBlock Text="{Binding User.BMR, StringFormat='{}{0:F0}'}"
+                                          FontSize="24"
+                                          FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Daily Calories -->
+                        <Border Grid.Row="1" Grid.Column="0"
+                               CornerRadius="12"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="16">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Daily Calories"
+                                          FontSize="12"
+                                          Opacity="0.6"/>
+                                <TextBlock Text="{Binding User.DailyCalories, StringFormat='{}{0:F0} kcal'}"
+                                          FontSize="24"
+                                          FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Activity Multiplier -->
+                        <Border Grid.Row="1" Grid.Column="1"
+                               CornerRadius="12"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="16">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Activity Multiplier"
+                                          FontSize="12"
+                                          Opacity="0.6"/>
+                                <TextBlock Text="{Binding User.ARM, StringFormat='{}{0:F2}x'}"
+                                          FontSize="24"
+                                          FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Macronutrient Split -->
+            <Border CornerRadius="16"
+                   Background="{DynamicResource MaterialCardBackgroundBrush}"
+                   BorderThickness="1"
+                   BorderBrush="{DynamicResource MaterialDividerBrush}"
+                   Padding="24">
+                <StackPanel Spacing="20">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Macronutrient Split"
+                                  FontSize="20"
+                                  FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="Total:" FontSize="14"/>
+                            <TextBlock Text="{Binding TotalPercentage, StringFormat='{}{0:F0}%'}" FontSize="14" FontWeight="SemiBold"/>
+                            <TextBlock Text="(should equal 100%)" FontSize="14" Opacity="0.6"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Warning if invalid -->
+                    <Border CornerRadius="8"
+                           Background="#40FF0000"
+                           Padding="12"
+                           IsVisible="{Binding !IsValidSplit}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <materialIcons:MaterialIcon Kind="Alert" Width="20" Height="20"/>
+                            <TextBlock Text="Total percentage must equal 100%"
+                                      FontSize="13"
+                                      VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Protein -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Protein (%)"
+                                  FontSize="14"
+                                  FontWeight="Medium"/>
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <Slider Grid.Column="0"
+                                   Minimum="10"
+                                   Maximum="50"
+                                   Value="{Binding ProteinPercentage}"
+                                   TickFrequency="1"
+                                   IsSnapToTickEnabled="True"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="{Binding ProteinPercentage, StringFormat='{}{0:F0}%'}"
+                                      FontSize="14"
+                                      FontWeight="SemiBold"
+                                      VerticalAlignment="Center"
+                                      Margin="16,0,16,0"
+                                      MinWidth="40"/>
+                            <TextBlock Grid.Column="2"
+                                      Text="{Binding User.DailyProtein, StringFormat='{}{0:F0}g'}"
+                                      FontSize="14"
+                                      Opacity="0.7"
+                                      VerticalAlignment="Center"
+                                      MinWidth="60"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Fat -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Fat (%)"
+                                  FontSize="14"
+                                  FontWeight="Medium"/>
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <Slider Grid.Column="0"
+                                   Minimum="10"
+                                   Maximum="50"
+                                   Value="{Binding FatPercentage}"
+                                   TickFrequency="1"
+                                   IsSnapToTickEnabled="True"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="{Binding FatPercentage, StringFormat='{}{0:F0}%'}"
+                                      FontSize="14"
+                                      FontWeight="SemiBold"
+                                      VerticalAlignment="Center"
+                                      Margin="16,0,16,0"
+                                      MinWidth="40"/>
+                            <TextBlock Grid.Column="2"
+                                      Text="{Binding User.DailyFat, StringFormat='{}{0:F0}g'}"
+                                      FontSize="14"
+                                      Opacity="0.7"
+                                      VerticalAlignment="Center"
+                                      MinWidth="60"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Carbohydrates -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Carbohydrates (%)"
+                                  FontSize="14"
+                                  FontWeight="Medium"/>
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <Slider Grid.Column="0"
+                                   Minimum="10"
+                                   Maximum="70"
+                                   Value="{Binding CarbsPercentage}"
+                                   TickFrequency="1"
+                                   IsSnapToTickEnabled="True"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="{Binding CarbsPercentage, StringFormat='{}{0:F0}%'}"
+                                      FontSize="14"
+                                      FontWeight="SemiBold"
+                                      VerticalAlignment="Center"
+                                      Margin="16,0,16,0"
+                                      MinWidth="40"/>
+                            <TextBlock Grid.Column="2"
+                                      Text="{Binding User.DailyCarbohydrates, StringFormat='{}{0:F0}g'}"
+                                      FontSize="14"
+                                      Opacity="0.7"
+                                      VerticalAlignment="Center"
+                                      MinWidth="60"/>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Action Buttons -->
+            <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                <Button Content="Reset to Defaults"
+                       Command="{Binding ResetToDefaultsCommand}"
+                       CornerRadius="12"
+                       Padding="16,8">
+                    <Button.Styles>
+                        <Style Selector="Button">
+                            <Setter Property="Background" Value="{DynamicResource MaterialSecondaryLightBrush}"/>
+                        </Style>
+                    </Button.Styles>
+                </Button>
+                <Button Content="Save Preferences"
+                       Command="{Binding SavePreferencesCommand}"
+                       CornerRadius="12"
+                       Padding="16,8">
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
