@@ -1,0 +1,215 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="DailyMealPlannerExtended.Views.ProductDetail.ProductDetailView"
+             x:DataType="vm:ProductDetailViewModel"
+             x:CompileBindings="True">
+
+    <!-- Overlay Background -->
+    <Grid Background="#80000000" IsVisible="{Binding IsVisible}">
+        <!-- Product Detail Card -->
+        <Border MaxWidth="700"
+                MaxHeight="800"
+                CornerRadius="16"
+                Background="{DynamicResource MaterialCardBackgroundBrush}"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource MaterialDividerBrush}"
+                Padding="24"
+                Margin="32">
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header with Close Button -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                    <TextBlock Grid.Column="0"
+                              Text="{Binding Product.Name}"
+                              FontSize="24"
+                              FontWeight="Bold"
+                              TextWrapping="Wrap"/>
+
+                    <Button Grid.Column="1"
+                           Command="{Binding CloseCommand}"
+                           CornerRadius="12"
+                           Padding="8">
+                        <materialIcons:MaterialIcon Kind="Close" Width="24" Height="24"/>
+                    </Button>
+                </Grid>
+
+                <!-- Content -->
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel Spacing="16">
+                        <!-- Alternate Names -->
+                        <ItemsControl ItemsSource="{Binding Product.AltNames}"
+                                     IsVisible="{Binding Product.AltNames.Count}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="x:String">
+                                    <Border Background="#40808080"
+                                           CornerRadius="8"
+                                           Padding="6,3"
+                                           Margin="0,0,4,4">
+                                        <TextBlock Text="{Binding}"
+                                                  FontSize="11"
+                                                  Opacity="0.8"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Description -->
+                        <Border CornerRadius="12"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="16"
+                               IsVisible="{Binding Product.Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Description"
+                                          FontSize="12"
+                                          Opacity="0.6"
+                                          FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding Product.Description}"
+                                          TextWrapping="Wrap"
+                                          FontSize="14"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Category and Labels -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Category &amp; Labels"
+                                      FontSize="12"
+                                      Opacity="0.6"
+                                      FontWeight="SemiBold"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Border Background="{DynamicResource MaterialPrimaryLightBrush}"
+                                       CornerRadius="8"
+                                       Padding="8,4">
+                                    <TextBlock Text="{Binding Product.Category}"
+                                              FontSize="12"/>
+                                </Border>
+
+                                <ItemsControl ItemsSource="{Binding Product.Labels}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="x:String">
+                                            <Border Background="{DynamicResource MaterialSecondaryLightBrush}"
+                                                   CornerRadius="8"
+                                                   Padding="6,3"
+                                                   Margin="4,0">
+                                                <TextBlock Text="{Binding}"
+                                                          FontSize="11"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Serving Size -->
+                        <Border CornerRadius="12"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="16"
+                               IsVisible="{Binding Product.Serving, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Serving Size"
+                                          FontSize="12"
+                                          Opacity="0.6"
+                                          FontWeight="SemiBold"/>
+                                <TextBlock FontSize="18" FontWeight="SemiBold">
+                                    <Run Text="{Binding Product.Serving, StringFormat='{}{0:F0}'}"/>
+                                    <Run Text="{Binding Product.Unit}"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Nutritional Information -->
+                        <Border CornerRadius="12"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="16">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Nutritional Information (per 100g)"
+                                          FontSize="12"
+                                          Opacity="0.6"
+                                          FontWeight="SemiBold"/>
+
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                    <!-- Calories -->
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Calories" FontSize="14"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Product.Calories, StringFormat='{}{0:F0} kcal'}" FontSize="14" FontWeight="SemiBold"/>
+
+                                    <!-- Protein -->
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Protein" FontSize="14" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Product.Protein, StringFormat='{}{0:F1} g'}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0"/>
+
+                                    <!-- Total Fat -->
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Total Fat" FontSize="14" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Product.TotalFat, StringFormat='{}{0:F1} g'}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0"/>
+
+                                    <!-- Carbohydrates -->
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Carbohydrates" FontSize="14" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Product.Carbohydrates, StringFormat='{}{0:F1} g'}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0"/>
+
+                                    <!-- Fiber -->
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Fiber" FontSize="14" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Product.Fiber, StringFormat='{}{0:F1} g'}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0"/>
+
+                                    <!-- Sugar -->
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Sugar" FontSize="14" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Product.Sugar, StringFormat='{}{0:F1} g'}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0"/>
+
+                                    <!-- Sodium -->
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Sodium" FontSize="14" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Product.Sodium, StringFormat='{}{0:F1} mg'}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Ingredients -->
+                        <Border CornerRadius="12"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="16"
+                               IsVisible="{Binding Product.Ingredients.Count}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Ingredients"
+                                          FontSize="12"
+                                          Opacity="0.6"
+                                          FontWeight="SemiBold"/>
+                                <ItemsControl ItemsSource="{Binding Product.Ingredients}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="x:String">
+                                            <TextBlock Text="{Binding}"
+                                                      FontSize="13"
+                                                      Margin="0,2"
+                                                      TextWrapping="Wrap"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Row="2"
+                           Orientation="Horizontal"
+                           Spacing="12"
+                           HorizontalAlignment="Right"
+                           Margin="0,16,0,0">
+                    <Button Content="Add to Meal Plan"
+                           CornerRadius="12"
+                           Padding="16,8">
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

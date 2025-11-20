@@ -14,6 +14,7 @@ public partial class CatalogViewModel : ViewModelBase
 {
     private readonly DatabaseService _databaseService;
     private CancellationTokenSource? _searchDebounceCts;
+    private readonly ProductDetailViewModel _productDetailViewModel;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -65,6 +66,7 @@ public partial class CatalogViewModel : ViewModelBase
     public CatalogViewModel()
     {
         _databaseService = new DatabaseService();
+        _productDetailViewModel = App.GetMainWindowViewModel().ProductDetailViewModel;
         _ = InitializeAsync();
     }
 
@@ -234,6 +236,12 @@ public partial class CatalogViewModel : ViewModelBase
             SelectedLabels.Remove(label);
             _ = SearchCommand.ExecuteAsync(null);
         }
+    }
+
+    [RelayCommand]
+    private void ShowProductDetail(Product product)
+    {
+        _productDetailViewModel.ShowProduct(product);
     }
 
     partial void OnSearchTextChanged(string value)

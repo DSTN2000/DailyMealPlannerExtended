@@ -11,6 +11,13 @@ namespace DailyMealPlannerExtended;
 
 public partial class App : Application
 {
+    private static MainWindowViewModel? _mainWindowViewModel;
+
+    public static MainWindowViewModel GetMainWindowViewModel()
+    {
+        return _mainWindowViewModel ?? throw new InvalidOperationException("MainWindowViewModel not initialized");
+    }
+
     public override void Initialize()
     {
         // Initialize logger early
@@ -23,12 +30,13 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
+            // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
+            _mainWindowViewModel = new MainWindowViewModel();
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(),
+                DataContext = _mainWindowViewModel,
             };
         }
 

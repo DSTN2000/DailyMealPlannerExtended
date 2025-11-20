@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
         xmlns:views="using:DailyMealPlannerExtended.Views"
+        xmlns:productDetail="using:DailyMealPlannerExtended.Views.ProductDetail"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:Material.Styles.Controls;assembly=Material.Styles"
@@ -20,41 +21,47 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TabControl TabStripPlacement="Left">
-        <TabItem ToolTip.Tip="Catalog" ToolTip.Placement="Right">
-            <TabItem.Header>
-                <materialIcons:MaterialIcon Kind="BookOpen" Width="24" Height="24" />
-            </TabItem.Header>
-            <views:Catalog />
-        </TabItem>
-        <TabItem ToolTip.Tip="Meal Plan" ToolTip.Placement="Right">
-            <TabItem.Header>
-                <materialIcons:MaterialIcon Kind="FoodApple" Width="24" Height="24" />
-            </TabItem.Header>
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Meal Plan Page"/>
-        </TabItem>
-        <TabItem ToolTip.Tip="Favorites" ToolTip.Placement="Right">
-            <TabItem.Header>
-                <materialIcons:MaterialIcon Kind="Star" Width="24" Height="24" />
-            </TabItem.Header>
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Favorites Page"/>
-        </TabItem>
-        <TabItem IsEnabled="False" Height="1000">
-            <TabItem.Header>
-                <Border/>
-            </TabItem.Header>
-        </TabItem>
-        <TabItem ToolTip.Tip="History" ToolTip.Placement="Right">
-            <TabItem.Header>
-                <materialIcons:MaterialIcon Kind="Calendar" Width="24" Height="24" />
-            </TabItem.Header>
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Meal Plan History Page"/>
-        </TabItem>
-        <TabItem ToolTip.Tip="User Preferences" ToolTip.Placement="Right">
-            <TabItem.Header>
-                <materialIcons:MaterialIcon Kind="Cog" Width="24" Height="24" />
-            </TabItem.Header>
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="User Preferences Page"/>
-        </TabItem>
-    </TabControl>
+    <Grid>
+        <!-- Main Content -->
+        <TabControl TabStripPlacement="Left">
+            <TabItem ToolTip.Tip="Catalog" ToolTip.Placement="Right">
+                <TabItem.Header>
+                    <materialIcons:MaterialIcon Kind="BookOpen" Width="24" Height="24" />
+                </TabItem.Header>
+                <views:Catalog />
+            </TabItem>
+            <TabItem ToolTip.Tip="Meal Plan" ToolTip.Placement="Right">
+                <TabItem.Header>
+                    <materialIcons:MaterialIcon Kind="FoodApple" Width="24" Height="24" />
+                </TabItem.Header>
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Meal Plan Page"/>
+            </TabItem>
+            <TabItem ToolTip.Tip="Favorites" ToolTip.Placement="Right">
+                <TabItem.Header>
+                    <materialIcons:MaterialIcon Kind="Star" Width="24" Height="24" />
+                </TabItem.Header>
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Favorites Page"/>
+            </TabItem>
+            <TabItem IsEnabled="False" Height="1000">
+                <TabItem.Header>
+                    <Border/>
+                </TabItem.Header>
+            </TabItem>
+            <TabItem ToolTip.Tip="History" ToolTip.Placement="Right">
+                <TabItem.Header>
+                    <materialIcons:MaterialIcon Kind="Calendar" Width="24" Height="24" />
+                </TabItem.Header>
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Meal Plan History Page"/>
+            </TabItem>
+            <TabItem ToolTip.Tip="User Preferences" ToolTip.Placement="Right">
+                <TabItem.Header>
+                    <materialIcons:MaterialIcon Kind="Cog" Width="24" Height="24" />
+                </TabItem.Header>
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="User Preferences Page"/>
+            </TabItem>
+        </TabControl>
+
+        <!-- Product Detail Overlay -->
+        <productDetail:ProductDetailView DataContext="{Binding ProductDetailViewModel}"/>
+    </Grid>
 </Window>

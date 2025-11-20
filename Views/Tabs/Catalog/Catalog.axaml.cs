@@ -1,6 +1,8 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using DailyMealPlannerExtended.ViewModels;
+using Lab4.Models;
 
 namespace DailyMealPlannerExtended.Views;
 
@@ -22,6 +24,17 @@ public partial class Catalog : UserControl
             }
             // Clear selection so the same label can be selected again if removed
             comboBox.SelectedItem = null;
+        }
+    }
+
+    private void ProductCard_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Border border && border.DataContext is Product product)
+        {
+            if (DataContext is CatalogViewModel viewModel)
+            {
+                viewModel.ShowProductDetailCommand.Execute(product);
+            }
         }
     }
 }
