@@ -188,7 +188,7 @@ public class DatabaseService : IDisposable
                 Serving = q,
                 Unit = u,
                 Labels = ParseJsonStringList(reader.IsDBNull(7) ? null : reader.GetString(7)),
-                Ingredients = ParseJsonStringList(reader.IsDBNull(8) ? null : reader.GetString(8)),
+                Ingredients = ParseIngredients(reader.IsDBNull(8) ? null : reader.GetString(8)),
 
                 // Parse nutritional values
                 Calories = GetNutritionValue(nutrition, "calories"),
@@ -271,10 +271,36 @@ public class DatabaseService : IDisposable
             var list = JsonSerializer.Deserialize<List<string>>(json);
             return list ?? new List<string>();
         }
-        catch
+        catch (Exception ex)
         {
+            var preview = json != null ? json.Substring(0, Math.Min(100, json.Length)) : "";
+            Logger.Instance.Error(ex, "Error parsing JSON string list: {Json}", preview);
             return new List<string>();
         }
+    }
+
+    private List<string> ParseIngredients(string? ingredients)
+    {
+        if (string.IsNullOrWhiteSpace(ingredients))
+            return new List<string>();
+
+        // Remove section labels (e.g., "Filling:", "Crust:", "Contains:")
+        var cleaned = System.Text.RegularExpressions.Regex.Replace(
+            ingredients,
+            @"\b[A-Z][a-z]+:",
+            "",
+            System.Text.RegularExpressions.RegexOptions.None
+        );
+
+        // Split by comma or period, but not if inside parentheses
+        var pattern = @",(?![^()]*\))|\.(?![^()]*\))";
+        var parts = System.Text.RegularExpressions.Regex.Split(cleaned, pattern);
+
+        return parts
+            .Select(p => p.Trim().TrimEnd('.', ','))
+            .Where(p => !string.IsNullOrWhiteSpace(p) && p.Length > 2)
+            .Select(p => char.ToUpper(p[0]) + p.Substring(1))
+            .ToList();
     }
 
     private List<Product> SortByRelevance(List<Product> products, string searchText)

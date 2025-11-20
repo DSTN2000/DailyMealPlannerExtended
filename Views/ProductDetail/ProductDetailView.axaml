@@ -184,12 +184,21 @@
                                           Opacity="0.6"
                                           FontWeight="SemiBold"/>
                                 <ItemsControl ItemsSource="{Binding Product.Ingredients}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="x:String">
-                                            <TextBlock Text="{Binding}"
-                                                      FontSize="13"
-                                                      Margin="0,2"
-                                                      TextWrapping="Wrap"/>
+                                            <Border Background="#4080B0FF"
+                                                   CornerRadius="8"
+                                                   Padding="8,4"
+                                                   Margin="0,0,6,6">
+                                                <TextBlock Text="{Binding}"
+                                                          FontSize="12"
+                                                          TextWrapping="Wrap"/>
+                                            </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
