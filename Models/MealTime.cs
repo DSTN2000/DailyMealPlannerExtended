@@ -1,11 +1,15 @@
 using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Lab4.Models;
 
-public class MealTime
+public partial class MealTime : ObservableObject
 {
     public MealTimeType Type { get; set; }
-    public string Name { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    private string _name = string.Empty;
+
     public ObservableCollection<MealPlanItem> Items { get; set; } = new();
 
     // Calculated totals for this mealtime
@@ -24,7 +28,7 @@ public class MealTime
     public MealTime(MealTimeType type, string? customName = null)
     {
         Type = type;
-        Name = type switch
+        _name = type switch
         {
             MealTimeType.Breakfast => "Breakfast",
             MealTimeType.Lunch => "Lunch",

@@ -66,27 +66,16 @@
                                        Margin="0,0,0,16">
                                     <StackPanel Spacing="12">
                                         <!-- Meal Time Header -->
-                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0"
+                                                      Name="MealTimeNameText"
                                                       Text="{Binding Name}"
                                                       FontSize="18"
                                                       FontWeight="SemiBold"
-                                                      VerticalAlignment="Center"/>
+                                                      VerticalAlignment="Center"
+                                                      DoubleTapped="MealTimeName_DoubleTapped"/>
 
                                             <Button Grid.Column="1"
-                                                   Content="Add Food"
-                                                   CornerRadius="8"
-                                                   Padding="8,4"
-                                                   FontSize="12"
-                                                   Margin="0,0,8,0">
-                                                <Button.Styles>
-                                                    <Style Selector="Button">
-                                                        <Setter Property="Background" Value="{DynamicResource MaterialPrimaryLightBrush}"/>
-                                                    </Style>
-                                                </Button.Styles>
-                                            </Button>
-
-                                            <Button Grid.Column="2"
                                                    Command="{Binding $parent[ItemsControl].((vm:MealPlanViewModel)DataContext).RemoveMealTimeCommand}"
                                                    CommandParameter="{Binding}"
                                                    CornerRadius="8"
@@ -155,7 +144,7 @@
                                         </Border>
 
                                         <!-- Empty State -->
-                                        <TextBlock Text="No food items added yet. Click 'Add Food' to get started."
+                                        <TextBlock Text="No food items added yet."
                                                   FontSize="13"
                                                   Opacity="0.5"
                                                   TextAlignment="Center"
