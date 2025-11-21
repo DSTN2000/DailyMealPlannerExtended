@@ -1,12 +1,15 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DailyMealPlannerExtended.Services;
 using Lab4.Models;
 
 namespace DailyMealPlannerExtended.ViewModels;
 
 public partial class UserPreferencesViewModel : ViewModelBase
 {
+    private readonly UserPreferencesService _preferencesService;
+
     [ObservableProperty]
     private User _user = new();
 
@@ -29,6 +32,8 @@ public partial class UserPreferencesViewModel : ViewModelBase
 
     public UserPreferencesViewModel()
     {
+        _preferencesService = new UserPreferencesService();
+        LoadPreferences();
         UpdateNutrientSplit();
     }
 
@@ -72,8 +77,35 @@ public partial class UserPreferencesViewModel : ViewModelBase
     [RelayCommand]
     private void SavePreferences()
     {
-        // TODO: Implement saving to a file or database
-        Logger.Instance.Information("User preferences saved: Weight={Weight}kg, Height={Height}cm, Age={Age}, BMI={BMI:F1}, Daily Calories={Calories:F0}",
-            User.Weight, User.Height, User.Age, User.BMI, User.DailyCalories);
+        try
+        {
+            _preferencesService.SavePreferences(User, ProteinPercentage, FatPercentage, CarbsPercentage);
+            Logger.Instance.Information("User preferences saved: Weight={Weight}kg, Height={Height}cm, Age={Age}, BMI={BMI:F1}, Daily Calories={Calories:F0}",
+                User.Weight, User.Height, User.Age, User.BMI, User.DailyCalories);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to save preferences");
+        }
+    }
+
+    private void LoadPreferences()
+    {
+        try
+        {
+            var loaded = _preferencesService.LoadPreferences();
+            if (loaded.HasValue)
+            {
+                var (user, proteinPct, fatPct, carbsPct) = loaded.Value;
+                User = user;
+                ProteinPercentage = proteinPct;
+                FatPercentage = fatPct;
+                CarbsPercentage = carbsPct;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to load preferences");
+        }
     }
 }
