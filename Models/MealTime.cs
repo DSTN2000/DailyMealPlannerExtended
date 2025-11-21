@@ -1,10 +1,12 @@
+using System.Collections.ObjectModel;
+
 namespace Lab4.Models;
 
 public class MealTime
 {
     public MealTimeType Type { get; set; }
     public string Name { get; set; } = string.Empty;
-    public List<MealPlanItem> Items { get; set; } = new();
+    public ObservableCollection<MealPlanItem> Items { get; set; } = new();
 
     // Calculated totals for this mealtime
     public double TotalCalories => Items.Sum(item => item.Calories);

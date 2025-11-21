@@ -1,0 +1,342 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             xmlns:models="using:Lab4.Models"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="DailyMealPlannerExtended.Views.MealPlan.MealPlanView"
+             x:DataType="vm:MealPlanViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <vm:MealPlanViewModel/>
+    </Design.DataContext>
+
+    <Grid ColumnDefinitions="*,340" Margin="16">
+        <!-- Main Content - Meal Times -->
+        <Border Grid.Column="0"
+               CornerRadius="16"
+               Background="{DynamicResource MaterialCardBackgroundBrush}"
+               BorderThickness="1"
+               BorderBrush="{DynamicResource MaterialDividerBrush}"
+               Padding="24"
+               Margin="0,0,16,0">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <!-- Header with Date Picker -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Text="Meal Plan"
+                                  FontSize="24"
+                                  FontWeight="Bold"/>
+                        <TextBlock Text="{Binding SelectedDate, StringFormat='dddd, MMMM d, yyyy'}"
+                                  FontSize="14"
+                                  Opacity="0.7"/>
+                    </StackPanel>
+
+                    <CalendarDatePicker Grid.Column="1"
+                                       SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
+                                       VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- Add Meal Time Button -->
+                <Button Grid.Row="1"
+                       Content="Add Meal Time"
+                       Command="{Binding AddMealTimeCommand}"
+                       CornerRadius="12"
+                       Padding="12,6"
+                       HorizontalAlignment="Left"
+                       Margin="0,0,0,16">
+                    <Button.Styles>
+                        <Style Selector="Button">
+                            <Setter Property="Background" Value="{DynamicResource MaterialSecondaryDarkBrush}"/>
+                        </Style>
+                    </Button.Styles>
+                </Button>
+
+                <!-- Meal Times List -->
+                <ScrollViewer Grid.Row="2">
+                    <ItemsControl ItemsSource="{Binding CurrentMealPlan.MealTimes}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:MealTime">
+                                <Border CornerRadius="12"
+                                       Background="{DynamicResource MaterialPaperBrush}"
+                                       Padding="16"
+                                       Margin="0,0,0,16">
+                                    <StackPanel Spacing="12">
+                                        <!-- Meal Time Header -->
+                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                            <TextBlock Grid.Column="0"
+                                                      Text="{Binding Name}"
+                                                      FontSize="18"
+                                                      FontWeight="SemiBold"
+                                                      VerticalAlignment="Center"/>
+
+                                            <Button Grid.Column="1"
+                                                   Content="Add Food"
+                                                   CornerRadius="8"
+                                                   Padding="8,4"
+                                                   FontSize="12"
+                                                   Margin="0,0,8,0">
+                                                <Button.Styles>
+                                                    <Style Selector="Button">
+                                                        <Setter Property="Background" Value="{DynamicResource MaterialPrimaryLightBrush}"/>
+                                                    </Style>
+                                                </Button.Styles>
+                                            </Button>
+
+                                            <Button Grid.Column="2"
+                                                   Command="{Binding $parent[ItemsControl].((vm:MealPlanViewModel)DataContext).RemoveMealTimeCommand}"
+                                                   CommandParameter="{Binding}"
+                                                   CornerRadius="8"
+                                                   Padding="6"
+                                                   IsVisible="{Binding Type, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:MealTimeType.Custom}}">
+                                                <materialIcons:MaterialIcon Kind="Delete" Width="16" Height="16"/>
+                                            </Button>
+                                        </Grid>
+
+                                        <!-- Food Items -->
+                                        <ItemsControl ItemsSource="{Binding Items}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="models:MealPlanItem">
+                                                    <Border CornerRadius="8"
+                                                           Background="{DynamicResource MaterialCardBackgroundBrush}"
+                                                           Padding="12"
+                                                           Margin="0,0,0,8">
+                                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                                            <StackPanel Grid.Column="0" Spacing="4">
+                                                                <TextBlock Text="{Binding Product.Name}"
+                                                                          FontSize="14"
+                                                                          FontWeight="Medium"/>
+                                                                <StackPanel Orientation="Horizontal" Spacing="12" Opacity="0.7">
+                                                                    <TextBlock FontSize="12">
+                                                                        <Run Text="{Binding Weight, StringFormat='{}{0:F0}g'}"/>
+                                                                        <Run Text="•"/>
+                                                                        <Run Text="{Binding Calories, StringFormat='{}{0:F0} kcal'}"/>
+                                                                    </TextBlock>
+                                                                    <TextBlock Text="{Binding Protein, StringFormat='P: {0:F1}g'}" FontSize="12"/>
+                                                                    <TextBlock Text="{Binding TotalFat, StringFormat='F: {0:F1}g'}" FontSize="12"/>
+                                                                    <TextBlock Text="{Binding Carbohydrates, StringFormat='C: {0:F1}g'}" FontSize="12"/>
+                                                                </StackPanel>
+                                                            </StackPanel>
+
+                                                            <TextBox Grid.Column="1"
+                                                                    Text="{Binding Weight}"
+                                                                    Width="60"
+                                                                    Margin="8,0"
+                                                                    VerticalAlignment="Center"
+                                                                    Watermark="g"/>
+
+                                                            <Button Grid.Column="2"
+                                                                   CornerRadius="8"
+                                                                   Padding="6"
+                                                                   VerticalAlignment="Center">
+                                                                <materialIcons:MaterialIcon Kind="Close" Width="16" Height="16"/>
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- Meal Time Totals -->
+                                        <Border CornerRadius="8"
+                                               Background="{DynamicResource MaterialPrimaryLightBrush}"
+                                               Padding="12"
+                                               Opacity="0.8">
+                                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                                <TextBlock Text="Totals:" FontSize="12" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding TotalCalories, StringFormat='{}{0:F0} kcal'}" FontSize="12" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding TotalProtein, StringFormat='P: {0:F1}g'}" FontSize="12"/>
+                                                <TextBlock Text="{Binding TotalFat, StringFormat='F: {0:F1}g'}" FontSize="12"/>
+                                                <TextBlock Text="{Binding TotalCarbohydrates, StringFormat='C: {0:F1}g'}" FontSize="12"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Empty State -->
+                                        <TextBlock Text="No food items added yet. Click 'Add Food' to get started."
+                                                  FontSize="13"
+                                                  Opacity="0.5"
+                                                  TextAlignment="Center"
+                                                  Margin="0,8"
+                                                  IsVisible="{Binding !Items.Count}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Save Button -->
+                <Button Grid.Row="3"
+                       Content="Save Meal Plan"
+                       Command="{Binding SaveMealPlanCommand}"
+                       CornerRadius="12"
+                       Padding="16,8"
+                       HorizontalAlignment="Right"
+                       Margin="0,16,0,0">
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Right Panel - Nutritional Progress -->
+        <Border Grid.Column="1"
+               CornerRadius="16"
+               Background="{DynamicResource MaterialCardBackgroundBrush}"
+               BorderThickness="1"
+               BorderBrush="{DynamicResource MaterialDividerBrush}"
+               Padding="20">
+            <ScrollViewer>
+                <StackPanel Spacing="20">
+                    <!-- Header -->
+                    <TextBlock Text="Daily Progress"
+                              FontSize="20"
+                              FontWeight="Bold"/>
+
+                    <!-- Calories -->
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                      Text="Calories"
+                                      FontSize="14"
+                                      FontWeight="Medium"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="{Binding CurrentMealPlan.TotalCalories, StringFormat='{}{0:F0}'}"
+                                          FontSize="14"
+                                          FontWeight="Bold"/>
+                                <TextBlock Text="/"
+                                          FontSize="14"
+                                          Opacity="0.5"/>
+                                <TextBlock Text="{Binding User.DailyCalories, StringFormat='{}{0:F0}'}"
+                                          FontSize="14"
+                                          Opacity="0.7"/>
+                            </StackPanel>
+                        </Grid>
+                        <ProgressBar Value="{Binding CaloriesProgress}"
+                                    Maximum="100"
+                                    Height="8"
+                                    CornerRadius="4"/>
+                        <TextBlock Text="{Binding CaloriesProgress, StringFormat='{}{0:F0}%'}"
+                                  FontSize="12"
+                                  Opacity="0.6"
+                                  HorizontalAlignment="Right"/>
+                    </StackPanel>
+
+                    <!-- Protein -->
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                      Text="Protein"
+                                      FontSize="14"
+                                      FontWeight="Medium"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="{Binding CurrentMealPlan.TotalProtein, StringFormat='{}{0:F1}g'}"
+                                          FontSize="14"
+                                          FontWeight="Bold"/>
+                                <TextBlock Text="/"
+                                          FontSize="14"
+                                          Opacity="0.5"/>
+                                <TextBlock Text="{Binding User.DailyProtein, StringFormat='{}{0:F1}g'}"
+                                          FontSize="14"
+                                          Opacity="0.7"/>
+                            </StackPanel>
+                        </Grid>
+                        <ProgressBar Value="{Binding ProteinProgress}"
+                                    Maximum="100"
+                                    Height="8"
+                                    CornerRadius="4"/>
+                        <TextBlock Text="{Binding ProteinProgress, StringFormat='{}{0:F0}%'}"
+                                  FontSize="12"
+                                  Opacity="0.6"
+                                  HorizontalAlignment="Right"/>
+                    </StackPanel>
+
+                    <!-- Fat -->
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                      Text="Fat"
+                                      FontSize="14"
+                                      FontWeight="Medium"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="{Binding CurrentMealPlan.TotalFat, StringFormat='{}{0:F1}g'}"
+                                          FontSize="14"
+                                          FontWeight="Bold"/>
+                                <TextBlock Text="/"
+                                          FontSize="14"
+                                          Opacity="0.5"/>
+                                <TextBlock Text="{Binding User.DailyFat, StringFormat='{}{0:F1}g'}"
+                                          FontSize="14"
+                                          Opacity="0.7"/>
+                            </StackPanel>
+                        </Grid>
+                        <ProgressBar Value="{Binding FatProgress}"
+                                    Maximum="100"
+                                    Height="8"
+                                    CornerRadius="4"/>
+                        <TextBlock Text="{Binding FatProgress, StringFormat='{}{0:F0}%'}"
+                                  FontSize="12"
+                                  Opacity="0.6"
+                                  HorizontalAlignment="Right"/>
+                    </StackPanel>
+
+                    <!-- Carbohydrates -->
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                      Text="Carbohydrates"
+                                      FontSize="14"
+                                      FontWeight="Medium"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="{Binding CurrentMealPlan.TotalCarbohydrates, StringFormat='{}{0:F1}g'}"
+                                          FontSize="14"
+                                          FontWeight="Bold"/>
+                                <TextBlock Text="/"
+                                          FontSize="14"
+                                          Opacity="0.5"/>
+                                <TextBlock Text="{Binding User.DailyCarbohydrates, StringFormat='{}{0:F1}g'}"
+                                          FontSize="14"
+                                          Opacity="0.7"/>
+                            </StackPanel>
+                        </Grid>
+                        <ProgressBar Value="{Binding CarbsProgress}"
+                                    Maximum="100"
+                                    Height="8"
+                                    CornerRadius="4"/>
+                        <TextBlock Text="{Binding CarbsProgress, StringFormat='{}{0:F0}%'}"
+                                  FontSize="12"
+                                  Opacity="0.6"
+                                  HorizontalAlignment="Right"/>
+                    </StackPanel>
+
+                    <!-- Daily Summary Card -->
+                    <Border CornerRadius="12"
+                           Background="{DynamicResource MaterialPaperBrush}"
+                           Padding="16"
+                           Margin="0,16,0,0">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Daily Summary"
+                                      FontSize="16"
+                                      FontWeight="SemiBold"/>
+
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Total Calories" FontSize="13"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentMealPlan.TotalCalories, StringFormat='{}{0:F0} kcal'}" FontSize="13" FontWeight="SemiBold"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Total Protein" FontSize="13"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentMealPlan.TotalProtein, StringFormat='{}{0:F1}g'}" FontSize="13" FontWeight="SemiBold"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Total Fat" FontSize="13"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentMealPlan.TotalFat, StringFormat='{}{0:F1}g'}" FontSize="13" FontWeight="SemiBold"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Total Carbs" FontSize="13"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentMealPlan.TotalCarbohydrates, StringFormat='{}{0:F1}g'}" FontSize="13" FontWeight="SemiBold"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

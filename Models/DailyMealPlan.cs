@@ -1,9 +1,13 @@
+using System.Collections.ObjectModel;
+
 namespace Lab4.Models;
 
 public class DailyMealPlan
 {
     public DateTime Date { get; set; } = DateTime.Today;
-    public List<MealTime> MealTimes { get; set; } = new();
+    public ObservableCollection<MealTime> MealTimes { get; set; } = new();
+
+    public IEnumerable<string> MealTimeNames => MealTimes.Select((x) => x.Name);
 
     // Calculated daily totals
     public double TotalCalories => MealTimes.Sum(meal => meal.TotalCalories);
