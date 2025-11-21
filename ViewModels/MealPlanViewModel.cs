@@ -89,6 +89,28 @@ public partial class MealPlanViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void MoveMealTimeUp(MealTime mealTime)
+    {
+        var index = CurrentMealPlan.MealTimes.IndexOf(mealTime);
+        if (index > 0)
+        {
+            CurrentMealPlan.MealTimes.Move(index, index - 1);
+            Logger.Instance.Information("Moved meal time up: {Name}", mealTime.Name);
+        }
+    }
+
+    [RelayCommand]
+    private void MoveMealTimeDown(MealTime mealTime)
+    {
+        var index = CurrentMealPlan.MealTimes.IndexOf(mealTime);
+        if (index >= 0 && index < CurrentMealPlan.MealTimes.Count - 1)
+        {
+            CurrentMealPlan.MealTimes.Move(index, index + 1);
+            Logger.Instance.Information("Moved meal time down: {Name}", mealTime.Name);
+        }
+    }
+
+    [RelayCommand]
     private void AddFoodItem(MealTime mealTime)
     {
         // This will be triggered from the UI to show product selection
