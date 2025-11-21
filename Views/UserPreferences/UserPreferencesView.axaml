@@ -321,7 +321,7 @@
                        Padding="16,8">
                     <Button.Styles>
                         <Style Selector="Button">
-                            <Setter Property="Background" Value="{DynamicResource MaterialSecondaryLightBrush}"/>
+                            <Setter Property="Background" Value="{DynamicResource MaterialSecondaryDarkBrush}"/>
                         </Style>
                     </Button.Styles>
                 </Button>
