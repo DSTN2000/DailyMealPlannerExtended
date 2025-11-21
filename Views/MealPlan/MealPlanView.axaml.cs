@@ -2,7 +2,9 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using DailyMealPlannerExtended.ViewModels;
+using DailyMealPlannerExtended.Views.Toasts;
 using Lab4.Models;
+using ToastNotificationAvalonia.Manager;
 
 namespace DailyMealPlannerExtended.Views.MealPlan;
 
@@ -14,7 +16,7 @@ public partial class MealPlanView : UserControl
         DataContext = new MealPlanViewModel();
     }
 
-    private void MealTimeName_DoubleTapped(object? sender, TappedEventArgs e)
+    private async void MealTimeName_DoubleTapped(object? sender, TappedEventArgs e)
     {
         if (sender is not TextBlock textBlock) return;
         if (textBlock.DataContext is not MealTime mealTime) return;
@@ -26,7 +28,7 @@ public partial class MealPlanView : UserControl
         var grid = textBlock.Parent as Grid;
         if (grid == null) return;
 
-        // Store the original name for the TextBlock
+        // Store the original name
         var originalName = mealTime.Name;
 
         // Create TextBox for editing
@@ -47,63 +49,73 @@ public partial class MealPlanView : UserControl
         textBox.Focus();
         textBox.SelectAll();
 
+        var editCompleted = false;
+
         // Handle completion of editing
-        void CompleteEdit()
+        async Task CompleteEdit()
         {
-            if (!string.IsNullOrWhiteSpace(textBox.Text))
+            if (editCompleted) return;
+            editCompleted = true;
+
+            var newName = textBox.Text?.Trim();
+            var showToast = false;
+            var duplicateName = "";
+
+            if (!string.IsNullOrWhiteSpace(newName) && newName != originalName)
             {
-                mealTime.Name = textBox.Text.Trim();
+                // Get the ViewModel to check for duplicate names
+                if (DataContext is MealPlanViewModel viewModel)
+                {
+                    // Check if the new name already exists (excluding the current meal time)
+                    var existingNames = viewModel.CurrentMealPlan.MealTimes
+                        .Where(mt => mt != mealTime)
+                        .Select(mt => mt.Name.ToLowerInvariant());
+
+                    if (existingNames.Contains(newName.ToLowerInvariant()))
+                    {
+                        // Mark to show error toast after restoring UI
+                        showToast = true;
+                        duplicateName = newName;
+                    }
+                    else
+                    {
+                        mealTime.Name = newName;
+                    }
+                }
+                else
+                {
+                    mealTime.Name = newName;
+                }
             }
 
-            // Remove TextBox and recreate TextBlock
+            // Remove TextBox and restore TextBlock immediately
             grid.Children.Remove(textBox);
+            grid.Children.Add(textBlock);
 
-            var newTextBlock = new TextBlock
+            // Show toast after UI is restored
+            if (showToast)
             {
-                Name = "MealTimeNameText",
-                Text = mealTime.Name,
-                FontSize = 18,
-                FontWeight = Avalonia.Media.FontWeight.SemiBold,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                DataContext = mealTime,
-                [Grid.ColumnProperty] = 0
-            };
-            newTextBlock.DoubleTapped += MealTimeName_DoubleTapped;
-
-            grid.Children.Insert(0, newTextBlock);
+                await ToastManager.ShowToastAsync(new ErrorToast($"A meal time with the name '{duplicateName}' already exists."));
+            }
         }
 
-        void CancelEdit()
-        {
-            // Remove TextBox and recreate TextBlock without saving
-            grid.Children.Remove(textBox);
-
-            var newTextBlock = new TextBlock
-            {
-                Name = "MealTimeNameText",
-                Text = originalName,
-                FontSize = 18,
-                FontWeight = Avalonia.Media.FontWeight.SemiBold,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                DataContext = mealTime,
-                [Grid.ColumnProperty] = 0
-            };
-            newTextBlock.DoubleTapped += MealTimeName_DoubleTapped;
-
-            grid.Children.Insert(0, newTextBlock);
-        }
-
-        textBox.LostFocus += (s, ev) => CompleteEdit();
-        textBox.KeyDown += (s, ev) =>
+        textBox.LostFocus += async (s, ev) => await CompleteEdit();
+        textBox.KeyDown += async (s, ev) =>
         {
             if (ev.Key == Key.Enter)
             {
-                CompleteEdit();
+                await CompleteEdit();
                 ev.Handled = true;
             }
             else if (ev.Key == Key.Escape)
             {
-                CancelEdit();
+                if (!editCompleted)
+                {
+                    editCompleted = true;
+                    // Cancel - restore TextBlock without saving
+                    grid.Children.Remove(textBox);
+                    grid.Children.Add(textBlock);
+                }
                 ev.Handled = true;
             }
         };

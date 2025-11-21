@@ -32,5 +32,6 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="System.Text.Json" Version="10.0.0" />
+    <PackageReference Include="ToastNotificationAvalonia" Version="1.0.0" />
   </ItemGroup>
 </Project>

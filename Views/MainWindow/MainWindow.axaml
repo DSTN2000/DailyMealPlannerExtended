@@ -25,7 +25,7 @@
 
     <Grid>
         <!-- Main Content -->
-        <TabControl TabStripPlacement="Left">
+        <TabControl TabStripPlacement="Left" ZIndex="0">
             <TabItem ToolTip.Tip="Catalog" ToolTip.Placement="Right">
                 <TabItem.Header>
                     <materialIcons:MaterialIcon Kind="BookOpen" Width="24" Height="24" />
@@ -64,6 +64,15 @@
         </TabControl>
 
         <!-- Product Detail Overlay -->
-        <productDetail:ProductDetailView DataContext="{Binding ProductDetailViewModel}"/>
+        <productDetail:ProductDetailView DataContext="{Binding ProductDetailViewModel}" ZIndex="1"/>
+
+        <!-- Toast Notification Container -->
+        <Canvas Name="ToastContainer"
+                Width="400"
+                Height="100"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,20,0,0"
+                ZIndex="2"/>
     </Grid>
 </Window>
