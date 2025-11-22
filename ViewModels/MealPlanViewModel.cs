@@ -94,15 +94,21 @@ public partial class MealPlanViewModel : ViewModelBase
 
     private DailyMealPlan GetOrCreateMealPlan(DateTime date)
     {
-        // TODO: Load from database if exists
-        // For now, create a new one with default meal times
-        // Note: DailyMealPlan constructor already initializes MealTimes with default meals
+        // Try to load meal plan from snapshot if it exists
+        var snapshot = _snapshotService.LoadSnapshot(date);
+        if (snapshot != null)
+        {
+            Logger.Instance.Information("Loaded meal plan from snapshot for {Date}", date.ToShortDateString());
+            return snapshot.MealPlan;
+        }
+
+        // Create a new meal plan with default meal times
         var mealPlan = new DailyMealPlan
         {
             Date = date
         };
 
-        Logger.Instance.Information("Created meal plan for {Date}", date.ToShortDateString());
+        Logger.Instance.Information("Created new meal plan for {Date}", date.ToShortDateString());
         return mealPlan;
     }
 
