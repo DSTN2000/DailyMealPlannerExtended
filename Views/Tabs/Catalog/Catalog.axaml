@@ -170,7 +170,10 @@
                                             </Border>
 
                                             <!-- Action Button -->
-                                            <Button CornerRadius="12" Padding="12">
+                                            <Button CornerRadius="12"
+                                                   Padding="12"
+                                                   Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AddToMealPlanViewModel.ShowForProductCommand}"
+                                                   CommandParameter="{Binding}">
                                                 <materialIcons:MaterialIcon Kind="Plus" Width="24" Height="24"/>
                                             </Button>
                                         </StackPanel>

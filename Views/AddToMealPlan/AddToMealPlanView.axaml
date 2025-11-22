@@ -1,0 +1,155 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="DailyMealPlannerExtended.Views.AddToMealPlan.AddToMealPlanView"
+             x:DataType="vm:AddToMealPlanViewModel"
+             x:CompileBindings="True">
+
+    <!-- Overlay Background -->
+    <Grid Background="#80000000" IsVisible="{Binding IsVisible}">
+        <!-- Add to Meal Plan Card -->
+        <Border MaxWidth="500"
+                CornerRadius="16"
+                Background="{DynamicResource MaterialCardBackgroundBrush}"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource MaterialDividerBrush}"
+                Padding="24"
+                Margin="32"
+                VerticalAlignment="Center">
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Add to Meal Plan"
+                                  FontSize="20"
+                                  FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Product.Name}"
+                                  FontSize="16"
+                                  Opacity="0.7"
+                                  Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                           Command="{Binding CloseCommand}"
+                           CornerRadius="12"
+                           Padding="8">
+                        <materialIcons:MaterialIcon Kind="Close" Width="24" Height="24"/>
+                    </Button>
+                </Grid>
+
+                <!-- Content -->
+                <StackPanel Grid.Row="1" Spacing="20">
+                    <!-- Meal Time Selection -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Meal Time"
+                                  FontSize="14"
+                                  FontWeight="SemiBold"/>
+                        <ComboBox ItemsSource="{Binding AvailableMealTimes}"
+                                 SelectedItem="{Binding SelectedMealTime}"
+                                 HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Weight Input -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Weight"
+                                  FontSize="14"
+                                  FontWeight="SemiBold"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Grid.Column="0"
+                                    Text="{Binding Weight, Mode=TwoWay}"
+                                    Watermark="100"
+                                    Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="{Binding UnitLabel}"
+                                      FontSize="14"
+                                      VerticalAlignment="Center"
+                                      Opacity="0.7"
+                                      Width="20"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Serving Controls -->
+                    <Border CornerRadius="12"
+                           Background="{DynamicResource MaterialPaperBrush}"
+                           Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Servings"
+                                      FontSize="12"
+                                      Opacity="0.6"
+                                      FontWeight="SemiBold"/>
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Button Grid.Column="0"
+                                       Command="{Binding DecrementServingCommand}"
+                                       CornerRadius="8"
+                                       Padding="12,8"
+                                       Margin="0,0,8,0">
+                                    <materialIcons:MaterialIcon Kind="Minus" Width="20" Height="20"/>
+                                </Button>
+
+                                <StackPanel Grid.Column="1"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center">
+                                    <TextBlock FontSize="20"
+                                              FontWeight="Bold"
+                                              HorizontalAlignment="Center">
+                                        <Run Text="{Binding CurrentServings, StringFormat='{}{0:F2}'}"/>
+                                    </TextBlock>
+                                    <TextBlock Opacity="0.6"
+                                              FontSize="12"
+                                              HorizontalAlignment="Center">
+                                        <Run Text="("/>
+                                        <Run Text="{Binding Product.Serving, StringFormat='{}{0:F0}'}"/>
+                                        <Run Text="{Binding UnitLabel}"/>
+                                        <Run Text=" per serving)"/>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <Button Grid.Column="2"
+                                       Command="{Binding IncrementServingCommand}"
+                                       CornerRadius="8"
+                                       Padding="12,8"
+                                       Margin="8,0,0,0">
+                                    <materialIcons:MaterialIcon Kind="Plus" Width="20" Height="20"/>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Row="2"
+                           Orientation="Horizontal"
+                           Spacing="12"
+                           HorizontalAlignment="Right"
+                           Margin="0,20,0,0">
+                    <Button Content="Cancel"
+                           Command="{Binding CloseCommand}"
+                           CornerRadius="12"
+                           Padding="16,8">
+                    </Button>
+                    <Button Content="Add"
+                           Command="{Binding AddCommand}"
+                           CornerRadius="12"
+                           Padding="16,8">
+                        <Button.Styles>
+                            <Style Selector="Button">
+                                <Setter Property="Background" Value="{DynamicResource MaterialPrimaryDarkBrush}"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,15 +1,11 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DailyMealPlannerExtended.Services;
 using Lab4.Models;
 
 namespace DailyMealPlannerExtended.ViewModels;
 
 public partial class MealPlanViewModel : ViewModelBase
 {
-    private readonly UserPreferencesService _preferencesService;
-
     [ObservableProperty]
     private DateTime _selectedDate = DateTime.Today;
 
@@ -17,13 +13,15 @@ public partial class MealPlanViewModel : ViewModelBase
     private DailyMealPlan _currentMealPlan;
 
     [ObservableProperty]
-    private User _user = new();
+    private User _user;
 
-    public MealPlanViewModel()
+    public MealPlanViewModel(User user)
     {
-        _preferencesService = new UserPreferencesService();
-        LoadUserPreferences();
+        _user = user;
         _currentMealPlan = GetOrCreateMealPlan(SelectedDate);
+
+        // Subscribe to property changes for progress updates
+        SubscribeToPropertyChanges();
     }
 
     partial void OnSelectedDateChanged(DateTime value)
@@ -31,36 +29,71 @@ public partial class MealPlanViewModel : ViewModelBase
         CurrentMealPlan = GetOrCreateMealPlan(value);
     }
 
-    private void LoadUserPreferences()
+    partial void OnCurrentMealPlanChanged(DailyMealPlan value)
     {
-        try
+        // Subscribe to the new meal plan's property changes
+        if (value != null)
         {
-            var loaded = _preferencesService.LoadPreferences();
-            if (loaded.HasValue)
-            {
-                var (user, proteinPct, fatPct, carbsPct) = loaded.Value;
-                User = user;
-            }
+            value.PropertyChanged += CurrentMealPlan_PropertyChanged;
         }
-        catch (Exception ex)
+
+        // Update all progress properties
+        NotifyProgressChanged();
+    }
+
+    partial void OnUserChanged(User value)
+    {
+        // Subscribe to the new user's property changes
+        if (value != null)
         {
-            Logger.Instance.Error(ex, "Failed to load user preferences in MealPlanViewModel");
+            value.PropertyChanged += User_PropertyChanged;
         }
+
+        // Update all progress properties
+        NotifyProgressChanged();
+    }
+
+    private void SubscribeToPropertyChanges()
+    {
+        // Subscribe to CurrentMealPlan totals changes
+        CurrentMealPlan.PropertyChanged += CurrentMealPlan_PropertyChanged;
+
+        // Subscribe to User daily goals changes
+        User.PropertyChanged += User_PropertyChanged;
+    }
+
+    private void CurrentMealPlan_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName?.StartsWith("Total") == true)
+        {
+            NotifyProgressChanged();
+        }
+    }
+
+    private void User_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName?.StartsWith("Daily") == true)
+        {
+            NotifyProgressChanged();
+        }
+    }
+
+    private void NotifyProgressChanged()
+    {
+        OnPropertyChanged(nameof(CaloriesProgress));
+        OnPropertyChanged(nameof(ProteinProgress));
+        OnPropertyChanged(nameof(FatProgress));
+        OnPropertyChanged(nameof(CarbsProgress));
     }
 
     private DailyMealPlan GetOrCreateMealPlan(DateTime date)
     {
         // TODO: Load from database if exists
         // For now, create a new one with default meal times
+        // Note: DailyMealPlan constructor already initializes MealTimes with default meals
         var mealPlan = new DailyMealPlan
         {
-            Date = date,
-            MealTimes = new ObservableCollection<MealTime>
-            {
-                new MealTime(MealTimeType.Breakfast),
-                new MealTime(MealTimeType.Lunch),
-                new MealTime(MealTimeType.Dinner)
-            }
+            Date = date
         };
 
         Logger.Instance.Information("Created meal plan for {Date}", date.ToShortDateString());
@@ -111,11 +144,18 @@ public partial class MealPlanViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddFoodItem(MealTime mealTime)
+    private void RemoveFoodItem(MealPlanItem item)
     {
-        // This will be triggered from the UI to show product selection
-        // For now, we'll handle this through events or callbacks
-        Logger.Instance.Information("Add food item requested for {MealTime}", mealTime.Name);
+        foreach (var mealTime in CurrentMealPlan.MealTimes)
+        {
+            if (mealTime.Items.Contains(item))
+            {
+                mealTime.Items.Remove(item);
+                Logger.Instance.Information("Removed {Product} from {MealTime}",
+                    item.Product.Name, mealTime.Name);
+                break;
+            }
+        }
     }
 
     // Nutritional progress properties

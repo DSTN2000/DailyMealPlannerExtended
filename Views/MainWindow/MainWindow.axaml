@@ -5,6 +5,7 @@
         xmlns:productDetail="using:DailyMealPlannerExtended.Views.ProductDetail"
         xmlns:userPreferences="using:DailyMealPlannerExtended.Views.UserPreferences"
         xmlns:mealPlan="using:DailyMealPlannerExtended.Views.MealPlan"
+        xmlns:addToMealPlan="using:DailyMealPlannerExtended.Views.AddToMealPlan"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:Material.Styles.Controls;assembly=Material.Styles"
@@ -36,7 +37,7 @@
                 <TabItem.Header>
                     <materialIcons:MaterialIcon Kind="FoodApple" Width="24" Height="24" />
                 </TabItem.Header>
-                <mealPlan:MealPlanView />
+                <mealPlan:MealPlanView DataContext="{Binding MealPlanViewModel}"/>
             </TabItem>
             <TabItem ToolTip.Tip="Favorites" ToolTip.Placement="Right">
                 <TabItem.Header>
@@ -59,12 +60,15 @@
                 <TabItem.Header>
                     <materialIcons:MaterialIcon Kind="Cog" Width="24" Height="24" />
                 </TabItem.Header>
-                <userPreferences:UserPreferencesView />
+                <userPreferences:UserPreferencesView DataContext="{Binding UserPreferencesViewModel}" />
             </TabItem>
         </TabControl>
 
         <!-- Product Detail Overlay -->
         <productDetail:ProductDetailView DataContext="{Binding ProductDetailViewModel}" ZIndex="1"/>
+
+        <!-- Add to Meal Plan Overlay -->
+        <addToMealPlan:AddToMealPlanView DataContext="{Binding AddToMealPlanViewModel}" ZIndex="2"/>
 
         <!-- Toast Notification Container -->
         <Canvas Name="ToastContainer"
@@ -73,6 +77,6 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Top"
                 Margin="0,20,0,0"
-                ZIndex="2"/>
+                ZIndex="3"/>
     </Grid>
 </Window>

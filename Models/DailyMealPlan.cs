@@ -1,11 +1,13 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Lab4.Models;
 
-public class DailyMealPlan
+public partial class DailyMealPlan : ObservableObject
 {
     public DateTime Date { get; set; } = DateTime.Today;
-    public ObservableCollection<MealTime> MealTimes { get; set; } = new();
+    public ObservableCollection<MealTime> MealTimes { get; set; }
 
     public IEnumerable<string> MealTimeNames => MealTimes.Select((x) => x.Name);
 
@@ -20,9 +22,55 @@ public class DailyMealPlan
 
     public DailyMealPlan()
     {
+        MealTimes = new ObservableCollection<MealTime>();
+        MealTimes.CollectionChanged += MealTimes_CollectionChanged;
+
         // Initialize with default mealtimes
         MealTimes.Add(new MealTime(MealTimeType.Breakfast));
         MealTimes.Add(new MealTime(MealTimeType.Lunch));
         MealTimes.Add(new MealTime(MealTimeType.Dinner));
+    }
+
+    private void MealTimes_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        // Subscribe to new meal times
+        if (e.NewItems != null)
+        {
+            foreach (MealTime mealTime in e.NewItems)
+            {
+                mealTime.PropertyChanged += MealTime_PropertyChanged;
+            }
+        }
+
+        // Unsubscribe from removed meal times
+        if (e.OldItems != null)
+        {
+            foreach (MealTime mealTime in e.OldItems)
+            {
+                mealTime.PropertyChanged -= MealTime_PropertyChanged;
+            }
+        }
+
+        NotifyTotalsChanged();
+    }
+
+    private void MealTime_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // When any meal time's totals change, update daily totals
+        if (e.PropertyName?.StartsWith("Total") == true)
+        {
+            NotifyTotalsChanged();
+        }
+    }
+
+    private void NotifyTotalsChanged()
+    {
+        OnPropertyChanged(nameof(TotalCalories));
+        OnPropertyChanged(nameof(TotalProtein));
+        OnPropertyChanged(nameof(TotalFat));
+        OnPropertyChanged(nameof(TotalCarbohydrates));
+        OnPropertyChanged(nameof(TotalSodium));
+        OnPropertyChanged(nameof(TotalFiber));
+        OnPropertyChanged(nameof(TotalSugar));
     }
 }

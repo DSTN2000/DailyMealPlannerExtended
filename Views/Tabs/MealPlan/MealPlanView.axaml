@@ -8,7 +8,10 @@
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="DailyMealPlannerExtended.Views.MealPlan.MealPlanView"
              x:DataType="vm:MealPlanViewModel"
-             x:CompileBindings="True">
+             x:CompileBindings="True"
+             Focusable="True"
+             Background="Transparent"
+             PointerPressed="MealPlanView_PointerPressed">
 
     <Design.DataContext>
         <vm:MealPlanViewModel/>
@@ -131,13 +134,17 @@
                                                             </StackPanel>
 
                                                             <TextBox Grid.Column="1"
-                                                                    Text="{Binding Weight}"
+                                                                    Text="{Binding Weight, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                                                     Width="60"
                                                                     Margin="8,0"
                                                                     VerticalAlignment="Center"
-                                                                    Watermark="g"/>
+                                                                    Watermark="g"
+                                                                    KeyDown="FoodItemWeight_KeyDown"
+                                                                    LostFocus="FoodItemWeight_LostFocus"/>
 
                                                             <Button Grid.Column="2"
+                                                                   Command="{Binding $parent[UserControl].((vm:MealPlanViewModel)DataContext).RemoveFoodItemCommand}"
+                                                                   CommandParameter="{Binding}"
                                                                    CornerRadius="8"
                                                                    Padding="6"
                                                                    VerticalAlignment="Center">

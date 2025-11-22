@@ -1,9 +1,14 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace Lab4.Models;
 
-public class MealPlanItem
+public partial class MealPlanItem : ObservableObject
 {
     public Product Product { get; set; }
-    public double Weight { get; set; } = 100.0; // in grams
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Calories), nameof(Protein), nameof(TotalFat), nameof(Carbohydrates), nameof(Sodium), nameof(Fiber), nameof(Sugar))]
+    private double _weight = 100.0; // in grams
 
     // Calculated nutritional values (based on weight)
     public double Calories => Product.Calories * (Weight / 100.0);
@@ -22,6 +27,6 @@ public class MealPlanItem
     public MealPlanItem(Product product, double weight = 100.0)
     {
         Product = product;
-        Weight = weight;
+        _weight = weight;
     }
 }

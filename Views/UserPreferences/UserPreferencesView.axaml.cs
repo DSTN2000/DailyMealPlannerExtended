@@ -8,6 +8,6 @@ public partial class UserPreferencesView : UserControl
     public UserPreferencesView()
     {
         InitializeComponent();
-        DataContext = new UserPreferencesViewModel();
+        // DataContext will be set by MainWindow
     }
 }

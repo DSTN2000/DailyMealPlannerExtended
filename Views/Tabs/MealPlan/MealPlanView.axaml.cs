@@ -13,7 +13,28 @@ public partial class MealPlanView : UserControl
     public MealPlanView()
     {
         InitializeComponent();
-        DataContext = new MealPlanViewModel();
+        // DataContext will be set by MainWindow
+    }
+
+    private void MealPlanView_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Clear focus from any TextBox when clicking on the background
+        this.Focus();
+    }
+
+    private void FoodItemWeight_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && sender is TextBox textBox)
+        {
+            // Move focus away from the TextBox to commit the value
+            this.Focus();
+            e.Handled = true;
+        }
+    }
+
+    private void FoodItemWeight_LostFocus(object? sender, RoutedEventArgs e)
+    {
+        // Binding should update automatically when focus is lost
     }
 
     private async void MealTimeName_DoubleTapped(object? sender, TappedEventArgs e)
