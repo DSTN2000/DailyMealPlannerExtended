@@ -207,18 +207,79 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Action Buttons -->
-                <StackPanel Grid.Row="2"
-                           Orientation="Horizontal"
-                           Spacing="12"
-                           HorizontalAlignment="Right"
-                           Margin="0,16,0,0">
+                <!-- Action Buttons / Weight Controls -->
+                <StackPanel Grid.Row="2" Spacing="16" Margin="0,16,0,0">
+
+                    <!-- Add to Meal Plan Button (Catalog Mode) -->
                     <Button Content="Add to Meal Plan"
                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AddToMealPlanViewModel.ShowForProductCommand}"
                            CommandParameter="{Binding Product}"
                            CornerRadius="12"
-                           Padding="16,8">
+                           Padding="16,8"
+                           HorizontalAlignment="Right"
+                           IsVisible="{Binding ShowAddToMealPlanButton}">
                     </Button>
+
+                    <!-- Weight Controls (Edit/View Meal Item Mode) -->
+                    <StackPanel Spacing="12" IsVisible="{Binding ShowWeightControls}">
+
+                        <!-- Weight Input -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Weight" FontSize="14" FontWeight="SemiBold"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Grid.Column="0"
+                                        Text="{Binding MealPlanItem.Weight, Mode=TwoWay}"
+                                        Watermark="100"
+                                        Margin="0,0,8,0"
+                                        IsEnabled="{Binding IsWeightEditable}"/>
+                                <TextBlock Grid.Column="1"
+                                          Text="{Binding UnitLabel}"
+                                          FontSize="14"
+                                          VerticalAlignment="Center"
+                                          Opacity="0.7"
+                                          Width="20"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Serving Controls -->
+                        <Border CornerRadius="12"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="16">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Servings" FontSize="12" Opacity="0.6" FontWeight="SemiBold"/>
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Button Grid.Column="0"
+                                           Command="{Binding DecrementServingCommand}"
+                                           CornerRadius="8"
+                                           Padding="8"
+                                           IsEnabled="{Binding IsWeightEditable}">
+                                        <materialIcons:MaterialIcon Kind="Minus" Width="20" Height="20"/>
+                                    </Button>
+                                    <StackPanel Grid.Column="1"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center">
+                                        <TextBlock FontSize="20" FontWeight="Bold">
+                                            <Run Text="{Binding CurrentServings, StringFormat='{}{0:F2}'}"/>
+                                        </TextBlock>
+                                        <TextBlock Opacity="0.6" FontSize="12">
+                                            <Run Text="("/>
+                                            <Run Text="{Binding Product.Serving, StringFormat='{}{0:F0}'}"/>
+                                            <Run Text="{Binding UnitLabel}"/>
+                                            <Run Text=" per serving)"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Button Grid.Column="2"
+                                           Command="{Binding IncrementServingCommand}"
+                                           CornerRadius="8"
+                                           Padding="8"
+                                           IsEnabled="{Binding IsWeightEditable}">
+                                        <materialIcons:MaterialIcon Kind="Plus" Width="20" Height="20"/>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </Border>

@@ -22,19 +22,24 @@ public partial class MealPlanView : UserControl
         this.Focus();
     }
 
-    private void FoodItemWeight_KeyDown(object? sender, KeyEventArgs e)
+    private void MealPlanItem_Tapped(object? sender, TappedEventArgs e)
     {
-        if (e.Key == Key.Enter && sender is TextBox textBox)
+        if (sender is not Border border) return;
+        if (border.DataContext is not MealPlanItem mealPlanItem) return;
+
+        // Get the MainWindowViewModel to access ProductDetailViewModel
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is Window window && window.DataContext is MainWindowViewModel mainViewModel)
         {
-            // Move focus away from the TextBox to commit the value
-            this.Focus();
-            e.Handled = true;
+            // Show the meal plan item in ProductDetailView with editable mode (current day)
+            mainViewModel.ProductDetailViewModel.ShowMealPlanItem(mealPlanItem, isEditable: true);
         }
     }
 
-    private void FoodItemWeight_LostFocus(object? sender, RoutedEventArgs e)
+    private void RemoveButton_Tapped(object? sender, TappedEventArgs e)
     {
-        // Binding should update automatically when focus is lost
+        // Stop the event from bubbling up to the Border's Tapped event
+        e.Handled = true;
     }
 
     private async void MealTimeName_DoubleTapped(object? sender, TappedEventArgs e)
