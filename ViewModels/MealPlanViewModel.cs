@@ -9,6 +9,7 @@ public partial class MealPlanViewModel : ViewModelBase
 {
     private readonly DaySnapshotService _snapshotService;
     private readonly MealPlanService _mealPlanService;
+    private readonly FavoriteMealPlansService _favoritesService;
 
     [ObservableProperty]
     private DateTime _selectedDate = DateTime.Today;
@@ -19,15 +20,22 @@ public partial class MealPlanViewModel : ViewModelBase
     [ObservableProperty]
     private User _user;
 
+    [ObservableProperty]
+    private bool _isFavorite;
+
     public MealPlanViewModel(User user)
     {
         _user = user;
         _snapshotService = new DaySnapshotService();
         _mealPlanService = new MealPlanService();
+        _favoritesService = new FavoriteMealPlansService();
         _currentMealPlan = GetOrCreateMealPlan(SelectedDate);
 
         // Subscribe to property changes for progress updates
         SubscribeToPropertyChanges();
+
+        // Update favorite status
+        UpdateFavoriteStatus();
     }
 
     partial void OnSelectedDateChanged(DateTime value)
@@ -45,6 +53,9 @@ public partial class MealPlanViewModel : ViewModelBase
 
         // Update all progress properties
         NotifyProgressChanged();
+
+        // Update favorite status
+        UpdateFavoriteStatus();
     }
 
     partial void OnUserChanged(User value)
@@ -73,6 +84,13 @@ public partial class MealPlanViewModel : ViewModelBase
         if (e.PropertyName?.StartsWith("Total") == true)
         {
             NotifyProgressChanged();
+        }
+
+        // Reset favorite status when meal plan changes (except Name property)
+        if (e.PropertyName != nameof(DailyMealPlan.Name) &&
+            e.PropertyName != nameof(DailyMealPlan.Date))
+        {
+            UpdateFavoriteStatus();
         }
     }
 
@@ -299,6 +317,46 @@ public partial class MealPlanViewModel : ViewModelBase
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to import meal plan");
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleFavorite()
+    {
+        try
+        {
+            if (IsFavorite)
+            {
+                // Remove from favorites
+                _favoritesService.RemoveFromFavorites(CurrentMealPlan);
+                Logger.Instance.Information("Removed meal plan from favorites: {Name}", CurrentMealPlan.Name);
+            }
+            else
+            {
+                // Add to favorites
+                _favoritesService.AddToFavorites(CurrentMealPlan);
+                Logger.Instance.Information("Added meal plan to favorites: {Name}", CurrentMealPlan.Name);
+            }
+
+            // Update favorite status
+            UpdateFavoriteStatus();
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to toggle favorite");
+        }
+    }
+
+    private void UpdateFavoriteStatus()
+    {
+        try
+        {
+            IsFavorite = _favoritesService.IsFavorite(CurrentMealPlan);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to update favorite status");
+            IsFavorite = false;
         }
     }
 }

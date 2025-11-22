@@ -28,20 +28,39 @@
                Margin="0,0,16,0">
             <Grid RowDefinitions="Auto,Auto,*,Auto">
                 <!-- Header with Date Picker -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
-                    <StackPanel Grid.Column="0" Spacing="4">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,16">
+                    <StackPanel Grid.Column="0" Spacing="4" Orientation="Horizontal">
                         <TextBlock Name="MealPlanNameText"
                                   Text="{Binding CurrentMealPlan.Name}"
                                   FontSize="24"
                                   FontWeight="Bold"
                                   DoubleTapped="MealPlanName_DoubleTapped"
-                                  Cursor="Hand"/>
-                        <TextBlock Text="{Binding SelectedDate, StringFormat='dddd, MMMM d, yyyy'}"
-                                  FontSize="14"
-                                  Opacity="0.7"/>
+                                  Cursor="Hand"
+                                  VerticalAlignment="Center"/>
+
+                        <Button Command="{Binding ToggleFavoriteCommand}"
+                               CornerRadius="8"
+                               Padding="8"
+                               Margin="8,0,0,0"
+                               VerticalAlignment="Center"
+                               Background="Transparent"
+                               BorderThickness="0">
+                            <Panel>
+                                <materialIcons:MaterialIcon Kind="HeartOutline"
+                                                           Width="24"
+                                                           Height="24"
+                                                           Foreground="{DynamicResource MaterialBodyBrush}"
+                                                           IsVisible="{Binding !IsFavorite}"/>
+                                <materialIcons:MaterialIcon Kind="Heart"
+                                                           Width="24"
+                                                           Height="24"
+                                                           Foreground="#E91E63"
+                                                           IsVisible="{Binding IsFavorite}"/>
+                            </Panel>
+                        </Button>
                     </StackPanel>
 
-                    <CalendarDatePicker Grid.Column="1"
+                    <CalendarDatePicker Grid.Column="2"
                                        SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
                                        VerticalAlignment="Center"/>
                 </Grid>

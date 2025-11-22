@@ -1,0 +1,223 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             xmlns:models="using:DailyMealPlannerExtended.Models"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="DailyMealPlannerExtended.Views.Favorites.FavoritesView"
+             x:DataType="vm:FavoritesViewModel"
+             x:CompileBindings="True"
+             Background="Transparent">
+
+    <Design.DataContext>
+        <vm:FavoritesViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16">
+        <!-- Header -->
+        <Border Grid.Row="0"
+               CornerRadius="16"
+               Background="{DynamicResource MaterialCardBackgroundBrush}"
+               BorderThickness="1"
+               BorderBrush="{DynamicResource MaterialDividerBrush}"
+               Padding="24"
+               Margin="0,0,0,16">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Favorite Meal Plans"
+                          FontSize="24"
+                          FontWeight="Bold"/>
+                <TextBlock Text="{Binding TotalFavorites, StringFormat='{}{0} favorites saved'}"
+                          FontSize="14"
+                          Opacity="0.7"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Favorites Grid -->
+        <Border Grid.Row="1"
+               CornerRadius="16"
+               Background="{DynamicResource MaterialCardBackgroundBrush}"
+               BorderThickness="1"
+               BorderBrush="{DynamicResource MaterialDividerBrush}"
+               Padding="24">
+            <Grid>
+                <!-- Empty State -->
+                <StackPanel IsVisible="{Binding !TotalFavorites}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Spacing="16">
+                    <materialIcons:MaterialIcon Kind="HeartOutline"
+                                               Width="64"
+                                               Height="64"
+                                               Opacity="0.3"
+                                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="No favorite meal plans yet"
+                              FontSize="18"
+                              Opacity="0.5"
+                              TextAlignment="Center"/>
+                    <TextBlock Text="Click the heart icon on a meal plan to add it to your favorites"
+                              FontSize="14"
+                              Opacity="0.4"
+                              TextAlignment="Center"
+                              MaxWidth="400"
+                              TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Favorites List -->
+                <ScrollViewer IsVisible="{Binding TotalFavorites}">
+                    <ItemsControl ItemsSource="{Binding CurrentPageFavorites}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:DailyMealPlan">
+                            <Border CornerRadius="12"
+                                   Background="{DynamicResource MaterialPaperBrush}"
+                                   Padding="20"
+                                   Margin="0,0,0,16">
+                                <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                    <!-- Header -->
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="{Binding Name}"
+                                                  FontSize="20"
+                                                  FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Date, StringFormat='Saved from {0:MMMM d, yyyy}'}"
+                                                  FontSize="13"
+                                                  Opacity="0.6"/>
+                                    </StackPanel>
+
+                                    <!-- Action Buttons -->
+                                    <StackPanel Grid.Row="0" Grid.Column="1"
+                                               Orientation="Horizontal"
+                                               Spacing="8"
+                                               VerticalAlignment="Top">
+                                        <Button Command="{Binding $parent[UserControl].((vm:FavoritesViewModel)DataContext).LoadMealPlanCommand}"
+                                               CommandParameter="{Binding}"
+                                               CornerRadius="8"
+                                               Padding="12,6">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <materialIcons:MaterialIcon Kind="Download" Width="16" Height="16"/>
+                                                <TextBlock Text="Load" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <Button.Styles>
+                                                <Style Selector="Button">
+                                                    <Setter Property="Background" Value="{DynamicResource MaterialSecondaryDarkBrush}"/>
+                                                </Style>
+                                            </Button.Styles>
+                                        </Button>
+
+                                        <Button Command="{Binding $parent[UserControl].((vm:FavoritesViewModel)DataContext).RemoveFromFavoritesCommand}"
+                                               CommandParameter="{Binding}"
+                                               CornerRadius="8"
+                                               Padding="8,6">
+                                            <materialIcons:MaterialIcon Kind="Delete" Width="16" Height="16"/>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <!-- Nutritional Summary -->
+                                    <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                           CornerRadius="8"
+                                           Background="{DynamicResource MaterialPrimaryLightBrush}"
+                                           Padding="12"
+                                           Margin="0,12,0,0"
+                                           Opacity="0.8">
+                                        <StackPanel Orientation="Horizontal" Spacing="20">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="Calories" FontSize="11" Opacity="0.7"/>
+                                                <TextBlock Text="{Binding TotalCalories, StringFormat='{}{0:F0} kcal'}"
+                                                          FontSize="14"
+                                                          FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="Protein" FontSize="11" Opacity="0.7"/>
+                                                <TextBlock Text="{Binding TotalProtein, StringFormat='{}{0:F1}g'}"
+                                                          FontSize="14"
+                                                          FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="Fat" FontSize="11" Opacity="0.7"/>
+                                                <TextBlock Text="{Binding TotalFat, StringFormat='{}{0:F1}g'}"
+                                                          FontSize="14"
+                                                          FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="Carbs" FontSize="11" Opacity="0.7"/>
+                                                <TextBlock Text="{Binding TotalCarbohydrates, StringFormat='{}{0:F1}g'}"
+                                                          FontSize="14"
+                                                          FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Meal Times Preview -->
+                                    <ItemsControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                                 ItemsSource="{Binding MealTimes}"
+                                                 Margin="0,12,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="models:MealTime">
+                                                <StackPanel Spacing="4" Margin="0,0,0,8">
+                                                    <TextBlock Text="{Binding Name}"
+                                                              FontSize="13"
+                                                              FontWeight="Medium"
+                                                              Opacity="0.8"/>
+                                                    <TextBlock FontSize="12" Opacity="0.6">
+                                                        <Run Text="{Binding Items.Count}"/>
+                                                        <Run Text="items"/>
+                                                        <Run Text="•"/>
+                                                        <Run Text="{Binding TotalCalories, StringFormat='{}{0:F0} kcal'}"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Pagination -->
+        <Border Grid.Row="2"
+               CornerRadius="16"
+               Background="{DynamicResource MaterialCardBackgroundBrush}"
+               BorderThickness="1"
+               BorderBrush="{DynamicResource MaterialDividerBrush}"
+               Padding="20"
+               Margin="0,16,0,0"
+               IsVisible="{Binding TotalFavorites}">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0"
+                       Command="{Binding GoToPreviousPageCommand}"
+                       CornerRadius="8"
+                       Padding="12,8">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="ChevronLeft" Width="20" Height="20"/>
+                        <TextBlock Text="Previous" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <StackPanel Grid.Column="1"
+                           Orientation="Horizontal"
+                           Spacing="8"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center">
+                    <TextBlock Text="Page" FontSize="14" Opacity="0.7"/>
+                    <TextBlock Text="{Binding CurrentPage}" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Text="of" FontSize="14" Opacity="0.7"/>
+                    <TextBlock Text="{Binding TotalPages}" FontSize="14" FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <Button Grid.Column="2"
+                       Command="{Binding GoToNextPageCommand}"
+                       CornerRadius="8"
+                       Padding="12,8">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="Next" VerticalAlignment="Center"/>
+                        <materialIcons:MaterialIcon Kind="ChevronRight" Width="20" Height="20"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
