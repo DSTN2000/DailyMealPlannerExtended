@@ -23,26 +23,11 @@ public class UserPreferencesService
         }
     }
 
-    public void SavePreferences(User user, double proteinPercentage, double fatPercentage, double carbsPercentage)
+    public void SavePreferences(User user)
     {
         try
         {
-            var preferences = new UserPreferencesData
-            {
-                Weight = user.Weight,
-                Height = user.Height,
-                Age = user.Age,
-                ActivityLevel = user.ActivityLevel,
-                ProteinPercentage = proteinPercentage,
-                FatPercentage = fatPercentage,
-                CarbsPercentage = carbsPercentage
-            };
-
-            var json = JsonSerializer.Serialize(preferences, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
+            var json = SerializeUserToJson(user);
             File.WriteAllText(PreferencesFilePath, json);
             Logger.Instance.Information("User preferences saved to: {Path}", PreferencesFilePath);
         }
@@ -53,7 +38,7 @@ public class UserPreferencesService
         }
     }
 
-    public (User user, double proteinPercentage, double fatPercentage, double carbsPercentage)? LoadPreferences()
+    public User? LoadPreferences()
     {
         try
         {
@@ -64,31 +49,63 @@ public class UserPreferencesService
             }
 
             var json = File.ReadAllText(PreferencesFilePath);
-            var preferences = JsonSerializer.Deserialize<UserPreferencesData>(json);
+            var user = DeserializeUserFromJson(json);
 
-            if (preferences == null)
+            if (user == null)
             {
                 Logger.Instance.Warning("Failed to deserialize preferences, using defaults");
                 return null;
             }
 
-            var user = new User
-            {
-                Weight = preferences.Weight,
-                Height = preferences.Height,
-                Age = preferences.Age,
-                ActivityLevel = preferences.ActivityLevel,
-                NutrientsSplit = (preferences.ProteinPercentage, preferences.FatPercentage, preferences.CarbsPercentage)
-            };
-
             Logger.Instance.Information("User preferences loaded from: {Path}", PreferencesFilePath);
-            return (user, preferences.ProteinPercentage, preferences.FatPercentage, preferences.CarbsPercentage);
+            return user;
         }
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to load user preferences, using defaults");
             return null;
         }
+    }
+
+    // Reusable serialization methods
+    public static string SerializeUserToJson(User user)
+    {
+        var preferences = new UserPreferencesData
+        {
+            Weight = user.Weight,
+            Height = user.Height,
+            Age = user.Age,
+            ActivityLevel = user.ActivityLevel,
+            ProteinPercentage = user.NutrientsSplit.p,
+            FatPercentage = user.NutrientsSplit.f,
+            CarbsPercentage = user.NutrientsSplit.c
+        };
+
+        return JsonSerializer.Serialize(preferences, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+    }
+
+    public static User? DeserializeUserFromJson(string json)
+    {
+        var preferences = JsonSerializer.Deserialize<UserPreferencesData>(json);
+
+        if (preferences == null)
+        {
+            return null;
+        }
+
+        var user = new User
+        {
+            Weight = preferences.Weight,
+            Height = preferences.Height,
+            Age = preferences.Age,
+            ActivityLevel = preferences.ActivityLevel,
+            NutrientsSplit = (preferences.ProteinPercentage, preferences.FatPercentage, preferences.CarbsPercentage)
+        };
+
+        return user;
     }
 }
 

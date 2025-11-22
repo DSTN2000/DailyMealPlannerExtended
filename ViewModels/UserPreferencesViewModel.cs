@@ -13,15 +13,6 @@ public partial class UserPreferencesViewModel : ViewModelBase
     [ObservableProperty]
     private User _user = new();
 
-    [ObservableProperty]
-    private double _proteinPercentage = 30;
-
-    [ObservableProperty]
-    private double _fatPercentage = 30;
-
-    [ObservableProperty]
-    private double _carbsPercentage = 40;
-
     public ObservableCollection<ActivityLevel> ActivityLevels { get; } = new()
     {
         ActivityLevel.Sedentary,
@@ -30,37 +21,60 @@ public partial class UserPreferencesViewModel : ViewModelBase
         ActivityLevel.High
     };
 
+    // Properties that bind directly to User.NutrientsSplit
+    public double ProteinPercentage
+    {
+        get => User.NutrientsSplit.p;
+        set
+        {
+            if (Math.Abs(User.NutrientsSplit.p - value) > 0.01)
+            {
+                User.NutrientsSplit = (value, User.NutrientsSplit.f, User.NutrientsSplit.c);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(TotalPercentage));
+                OnPropertyChanged(nameof(IsValidSplit));
+            }
+        }
+    }
+
+    public double FatPercentage
+    {
+        get => User.NutrientsSplit.f;
+        set
+        {
+            if (Math.Abs(User.NutrientsSplit.f - value) > 0.01)
+            {
+                User.NutrientsSplit = (User.NutrientsSplit.p, value, User.NutrientsSplit.c);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(TotalPercentage));
+                OnPropertyChanged(nameof(IsValidSplit));
+            }
+        }
+    }
+
+    public double CarbsPercentage
+    {
+        get => User.NutrientsSplit.c;
+        set
+        {
+            if (Math.Abs(User.NutrientsSplit.c - value) > 0.01)
+            {
+                User.NutrientsSplit = (User.NutrientsSplit.p, User.NutrientsSplit.f, value);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(TotalPercentage));
+                OnPropertyChanged(nameof(IsValidSplit));
+            }
+        }
+    }
+
+    public double TotalPercentage => User.NutrientsSplit.p + User.NutrientsSplit.f + User.NutrientsSplit.c;
+    public bool IsValidSplit => Math.Abs(TotalPercentage - 100) < 0.01;
+
     public UserPreferencesViewModel()
     {
         _preferencesService = new UserPreferencesService();
         LoadPreferences();
-        UpdateNutrientSplit();
     }
-
-    partial void OnProteinPercentageChanged(double value)
-    {
-        UpdateNutrientSplit();
-    }
-
-    partial void OnFatPercentageChanged(double value)
-    {
-        UpdateNutrientSplit();
-    }
-
-    partial void OnCarbsPercentageChanged(double value)
-    {
-        UpdateNutrientSplit();
-    }
-
-    private void UpdateNutrientSplit()
-    {
-        User.NutrientsSplit = (ProteinPercentage, FatPercentage, CarbsPercentage);
-        OnPropertyChanged(nameof(TotalPercentage));
-        OnPropertyChanged(nameof(IsValidSplit));
-    }
-
-    public double TotalPercentage => ProteinPercentage + FatPercentage + CarbsPercentage;
-    public bool IsValidSplit => Math.Abs(TotalPercentage - 100) < 0.01;
 
     [RelayCommand]
     private void ResetToDefaults()
@@ -69,9 +83,14 @@ public partial class UserPreferencesViewModel : ViewModelBase
         User.Height = 170;
         User.Age = 30;
         User.ActivityLevel = ActivityLevel.Moderate;
-        ProteinPercentage = 30;
-        FatPercentage = 30;
-        CarbsPercentage = 40;
+        User.NutrientsSplit = (30, 30, 40);
+
+        // Notify UI that percentages changed
+        OnPropertyChanged(nameof(ProteinPercentage));
+        OnPropertyChanged(nameof(FatPercentage));
+        OnPropertyChanged(nameof(CarbsPercentage));
+        OnPropertyChanged(nameof(TotalPercentage));
+        OnPropertyChanged(nameof(IsValidSplit));
     }
 
     [RelayCommand]
@@ -79,7 +98,7 @@ public partial class UserPreferencesViewModel : ViewModelBase
     {
         try
         {
-            _preferencesService.SavePreferences(User, ProteinPercentage, FatPercentage, CarbsPercentage);
+            _preferencesService.SavePreferences(User);
             Logger.Instance.Information("User preferences saved: Weight={Weight}kg, Height={Height}cm, Age={Age}, BMI={BMI:F1}, Daily Calories={Calories:F0}",
                 User.Weight, User.Height, User.Age, User.BMI, User.DailyCalories);
         }
@@ -93,14 +112,17 @@ public partial class UserPreferencesViewModel : ViewModelBase
     {
         try
         {
-            var loaded = _preferencesService.LoadPreferences();
-            if (loaded.HasValue)
+            var user = _preferencesService.LoadPreferences();
+            if (user != null)
             {
-                var (user, proteinPct, fatPct, carbsPct) = loaded.Value;
                 User = user;
-                ProteinPercentage = proteinPct;
-                FatPercentage = fatPct;
-                CarbsPercentage = carbsPct;
+
+                // Notify UI that all percentage properties may have changed
+                OnPropertyChanged(nameof(ProteinPercentage));
+                OnPropertyChanged(nameof(FatPercentage));
+                OnPropertyChanged(nameof(CarbsPercentage));
+                OnPropertyChanged(nameof(TotalPercentage));
+                OnPropertyChanged(nameof(IsValidSplit));
             }
         }
         catch (Exception ex)
