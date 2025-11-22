@@ -1,11 +1,15 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DailyMealPlannerExtended.Services;
 using Lab4.Models;
 
 namespace DailyMealPlannerExtended.ViewModels;
 
 public partial class MealPlanViewModel : ViewModelBase
 {
+    private readonly DaySnapshotService _snapshotService;
+    private readonly MealPlanService _mealPlanService;
+
     [ObservableProperty]
     private DateTime _selectedDate = DateTime.Today;
 
@@ -18,6 +22,8 @@ public partial class MealPlanViewModel : ViewModelBase
     public MealPlanViewModel(User user)
     {
         _user = user;
+        _snapshotService = new DaySnapshotService();
+        _mealPlanService = new MealPlanService();
         _currentMealPlan = GetOrCreateMealPlan(SelectedDate);
 
         // Subscribe to property changes for progress updates
@@ -176,14 +182,57 @@ public partial class MealPlanViewModel : ViewModelBase
         : 0;
 
     [RelayCommand]
-    private void SaveMealPlan()
+    private void SaveDaySnapshot()
     {
-        // TODO: Implement saving to database
-        Logger.Instance.Information("Save meal plan for {Date}: Calories={Calories:F0}, Protein={Protein:F1}g, Fat={Fat:F1}g, Carbs={Carbs:F1}g",
-            CurrentMealPlan.Date.ToShortDateString(),
-            CurrentMealPlan.TotalCalories,
-            CurrentMealPlan.TotalProtein,
-            CurrentMealPlan.TotalFat,
-            CurrentMealPlan.TotalCarbohydrates);
+        try
+        {
+            _snapshotService.SaveSnapshot(CurrentMealPlan, User);
+            Logger.Instance.Information("Day snapshot saved for {Date}: Calories={Calories:F0}, Protein={Protein:F1}g, Fat={Fat:F1}g, Carbs={Carbs:F1}g",
+                CurrentMealPlan.Date.ToShortDateString(),
+                CurrentMealPlan.TotalCalories,
+                CurrentMealPlan.TotalProtein,
+                CurrentMealPlan.TotalFat,
+                CurrentMealPlan.TotalCarbohydrates);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to save day snapshot");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportMealPlanAsync()
+    {
+        try
+        {
+            // TODO: Use file picker dialog to get export path
+            // For now, export to default location with a timestamp
+            var defaultPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                $"MealPlan-{CurrentMealPlan.Date:yyyy-MM-dd}.xml"
+            );
+
+            _mealPlanService.ExportMealPlan(CurrentMealPlan, defaultPath);
+            Logger.Instance.Information("Meal plan exported successfully");
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to export meal plan");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportMealPlanAsync()
+    {
+        try
+        {
+            // TODO: Use file picker dialog to get import path
+            // For now, log that this feature needs file picker implementation
+            Logger.Instance.Information("Import meal plan - file picker not yet implemented");
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to import meal plan");
+        }
     }
 }
