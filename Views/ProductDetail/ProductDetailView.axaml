@@ -214,6 +214,8 @@
                            HorizontalAlignment="Right"
                            Margin="0,16,0,0">
                     <Button Content="Add to Meal Plan"
+                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).AddToMealPlanViewModel.ShowForProductCommand}"
+                           CommandParameter="{Binding Product}"
                            CornerRadius="12"
                            Padding="16,8">
                     </Button>
