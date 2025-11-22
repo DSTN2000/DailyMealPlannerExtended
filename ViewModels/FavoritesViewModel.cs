@@ -9,6 +9,7 @@ namespace DailyMealPlannerExtended.ViewModels;
 public partial class FavoritesViewModel : ViewModelBase
 {
     private readonly FavoriteMealPlansService _favoritesService;
+    private readonly MealPlanViewModel? _mealPlanViewModel;
     private List<(string fileName, DailyMealPlan mealPlan)> _allFavorites = new();
     private const int PageSize = 10;
 
@@ -28,6 +29,11 @@ public partial class FavoritesViewModel : ViewModelBase
     {
         _favoritesService = new FavoriteMealPlansService();
         LoadFavorites();
+    }
+
+    public FavoritesViewModel(MealPlanViewModel mealPlanViewModel) : this()
+    {
+        _mealPlanViewModel = mealPlanViewModel;
     }
 
     private void LoadFavorites()
@@ -127,8 +133,56 @@ public partial class FavoritesViewModel : ViewModelBase
     {
         try
         {
-            // TODO: Implement loading meal plan into current day
-            Logger.Instance.Information("Load meal plan requested: {Name}", mealPlan.Name);
+            if (_mealPlanViewModel == null)
+            {
+                Logger.Instance.Warning("Cannot load meal plan: MealPlanViewModel not available");
+                return;
+            }
+
+            // Create a deep copy of the meal plan and set it to today's date
+            var newMealPlan = new DailyMealPlan
+            {
+                Date = _mealPlanViewModel.SelectedDate,
+                Name = mealPlan.Name
+            };
+
+            // Clear default meal times
+            newMealPlan.MealTimes.Clear();
+
+            // Copy all meal times and items
+            foreach (var mealTime in mealPlan.MealTimes)
+            {
+                var newMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
+
+                foreach (var item in mealTime.Items)
+                {
+                    // Create a copy of the product
+                    var productCopy = new Product
+                    {
+                        Name = item.Product.Name,
+                        Calories = item.Product.Calories,
+                        Protein = item.Product.Protein,
+                        TotalFat = item.Product.TotalFat,
+                        Carbohydrates = item.Product.Carbohydrates,
+                        Sodium = item.Product.Sodium,
+                        Fiber = item.Product.Fiber,
+                        Sugar = item.Product.Sugar,
+                        Serving = item.Product.Serving,
+                        Unit = item.Product.Unit
+                    };
+
+                    var newItem = new MealPlanItem(productCopy, item.Weight);
+                    newMealTime.Items.Add(newItem);
+                }
+
+                newMealPlan.MealTimes.Add(newMealTime);
+            }
+
+            // Replace the current meal plan
+            _mealPlanViewModel.CurrentMealPlan = newMealPlan;
+
+            Logger.Instance.Information("Loaded meal plan '{Name}' with {Calories:F0} kcal",
+                mealPlan.Name, mealPlan.TotalCalories);
         }
         catch (Exception ex)
         {

@@ -15,7 +15,7 @@ public partial class MainWindowViewModel : ViewModelBase
         // Create shared instances that need to communicate
         UserPreferencesViewModel = new UserPreferencesViewModel();
         MealPlanViewModel = new MealPlanViewModel(UserPreferencesViewModel.User);
-        FavoritesViewModel = new FavoritesViewModel();
+        FavoritesViewModel = new FavoritesViewModel(MealPlanViewModel);
         AddToMealPlanViewModel = new AddToMealPlanViewModel(MealPlanViewModel);
     }
 }
