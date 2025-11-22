@@ -1,6 +1,6 @@
-namespace Lab4.Models;
+namespace DailyMealPlannerExtended.Models;
 
-using Lab4.Models;
+using DailyMealPlannerExtended.Models;
 
 public class DaySnapshot
 {

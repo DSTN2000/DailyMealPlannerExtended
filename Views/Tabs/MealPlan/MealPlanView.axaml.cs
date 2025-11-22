@@ -3,7 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using DailyMealPlannerExtended.ViewModels;
 using DailyMealPlannerExtended.Views.Toasts;
-using Lab4.Models;
+using DailyMealPlannerExtended.Models;
 using ToastNotificationAvalonia.Manager;
 
 namespace DailyMealPlannerExtended.Views.MealPlan;

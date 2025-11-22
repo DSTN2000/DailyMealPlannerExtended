@@ -1,4 +1,4 @@
-namespace Lab4.Services;
+namespace DailyMealPlannerExtended.Services;
 
 using Serilog;
 using Serilog.Events;

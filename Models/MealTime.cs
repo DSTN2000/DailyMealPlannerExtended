@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Lab4.Models;
+namespace DailyMealPlannerExtended.Models;
 
 public partial class MealTime : ObservableObject
 {

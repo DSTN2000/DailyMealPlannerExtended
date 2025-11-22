@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DailyMealPlannerExtended.Services;
-using Lab4.Models;
+using DailyMealPlannerExtended.Models;
 using System;
 using System.Linq;
 

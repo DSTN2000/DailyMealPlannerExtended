@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Lab4.Models;
+using DailyMealPlannerExtended.Models;
 
 namespace DailyMealPlannerExtended.ViewModels;
 

@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Lab4.Models;
+namespace DailyMealPlannerExtended.Models;
 
 public partial class MealPlanItem : ObservableObject
 {

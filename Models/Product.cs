@@ -1,4 +1,4 @@
-namespace Lab4.Models;
+namespace DailyMealPlannerExtended.Models;
 
 public class Product
 {

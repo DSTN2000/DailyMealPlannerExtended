@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Lab4.Models;
+using DailyMealPlannerExtended.Models;
 
 namespace DailyMealPlannerExtended.Services;
 

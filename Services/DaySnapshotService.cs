@@ -1,5 +1,5 @@
 using System.Xml.Serialization;
-using Lab4.Models;
+using DailyMealPlannerExtended.Models;
 
 namespace DailyMealPlannerExtended.Services;
 

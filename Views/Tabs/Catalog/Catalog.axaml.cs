@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using DailyMealPlannerExtended.ViewModels;
-using Lab4.Models;
+using DailyMealPlannerExtended.Models;
 
 namespace DailyMealPlannerExtended.Views;
 

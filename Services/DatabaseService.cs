@@ -1,4 +1,4 @@
-using Lab4.Models;
+using DailyMealPlannerExtended.Models;
 using Microsoft.Data.Sqlite;
 using Fastenshtein;
 using System.Text.Json;

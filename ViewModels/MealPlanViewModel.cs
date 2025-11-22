@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DailyMealPlannerExtended.Services;
-using Lab4.Models;
+using DailyMealPlannerExtended.Models;
 
 namespace DailyMealPlannerExtended.ViewModels;
 
@@ -211,15 +211,37 @@ public partial class MealPlanViewModel : ViewModelBase
     {
         try
         {
-            // TODO: Use file picker dialog to get export path
-            // For now, export to default location with a timestamp
-            var defaultPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                $"MealPlan-{CurrentMealPlan.Date:yyyy-MM-dd}.xml"
-            );
+            // Get the top-level window to access the storage provider
+            var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
 
-            _mealPlanService.ExportMealPlan(CurrentMealPlan, defaultPath);
-            Logger.Instance.Information("Meal plan exported successfully");
+            if (topLevel == null)
+            {
+                Logger.Instance.Warning("Cannot export: no top-level window available");
+                return;
+            }
+
+            // Show save file dialog
+            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Export Meal Plan",
+                SuggestedFileName = $"MealPlan-{CurrentMealPlan.Date:yyyy-MM-dd}.xml",
+                FileTypeChoices = new[]
+                {
+                    new Avalonia.Platform.Storage.FilePickerFileType("XML Files")
+                    {
+                        Patterns = new[] { "*.xml" }
+                    }
+                }
+            });
+
+            if (file != null)
+            {
+                var filePath = file.Path.LocalPath;
+                _mealPlanService.ExportMealPlan(CurrentMealPlan, filePath);
+                Logger.Instance.Information("Meal plan exported to: {Path}", filePath);
+            }
         }
         catch (Exception ex)
         {
@@ -232,9 +254,47 @@ public partial class MealPlanViewModel : ViewModelBase
     {
         try
         {
-            // TODO: Use file picker dialog to get import path
-            // For now, log that this feature needs file picker implementation
-            Logger.Instance.Information("Import meal plan - file picker not yet implemented");
+            // Get the top-level window to access the storage provider
+            var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel == null)
+            {
+                Logger.Instance.Warning("Cannot import: no top-level window available");
+                return;
+            }
+
+            // Show open file dialog
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "Import Meal Plan",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new Avalonia.Platform.Storage.FilePickerFileType("XML Files")
+                    {
+                        Patterns = new[] { "*.xml" }
+                    }
+                }
+            });
+
+            if (files.Count > 0)
+            {
+                var filePath = files[0].Path.LocalPath;
+                var importedMealPlan = _mealPlanService.ImportMealPlan(filePath);
+
+                if (importedMealPlan != null)
+                {
+                    // Update the current meal plan date to today (or selected date)
+                    importedMealPlan.Date = SelectedDate;
+
+                    // Replace the current meal plan
+                    CurrentMealPlan = importedMealPlan;
+
+                    Logger.Instance.Information("Meal plan imported from: {Path}", filePath);
+                }
+            }
         }
         catch (Exception ex)
         {
