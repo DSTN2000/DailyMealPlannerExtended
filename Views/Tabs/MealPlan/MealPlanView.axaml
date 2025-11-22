@@ -30,9 +30,12 @@
                 <!-- Header with Date Picker -->
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
                     <StackPanel Grid.Column="0" Spacing="4">
-                        <TextBlock Text="Meal Plan"
+                        <TextBlock Name="MealPlanNameText"
+                                  Text="{Binding CurrentMealPlan.Name}"
                                   FontSize="24"
-                                  FontWeight="Bold"/>
+                                  FontWeight="Bold"
+                                  DoubleTapped="MealPlanName_DoubleTapped"
+                                  Cursor="Hand"/>
                         <TextBlock Text="{Binding SelectedDate, StringFormat='dddd, MMMM d, yyyy'}"
                                   FontSize="14"
                                   Opacity="0.7"/>

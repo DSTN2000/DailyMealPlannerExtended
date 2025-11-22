@@ -7,6 +7,10 @@ namespace DailyMealPlannerExtended.Models;
 public partial class DailyMealPlan : ObservableObject
 {
     public DateTime Date { get; set; } = DateTime.Today;
+
+    [ObservableProperty]
+    private string _name = $"My Meal Plan for {DateTime.Today:MMMM d, yyyy}";
+
     public ObservableCollection<MealTime> MealTimes { get; set; }
 
     public IEnumerable<string> MealTimeNames => MealTimes.Select((x) => x.Name);

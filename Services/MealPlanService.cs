@@ -11,6 +11,7 @@ public class MealPlanService
         var mealPlanData = new MealPlanData
         {
             Date = mealPlan.Date,
+            Name = mealPlan.Name,
             MealTimes = mealPlan.MealTimes.Select(mt => new MealTimeData
             {
                 Type = mt.Type,
@@ -52,7 +53,8 @@ public class MealPlanService
 
         var mealPlan = new DailyMealPlan
         {
-            Date = mealPlanData.Date
+            Date = mealPlanData.Date,
+            Name = mealPlanData.Name
         };
 
         // Clear default meal times before reconstructing
@@ -132,6 +134,7 @@ public class MealPlanService
 public class MealPlanData
 {
     public DateTime Date { get; set; }
+    public string Name { get; set; } = string.Empty;
     public List<MealTimeData> MealTimes { get; set; } = new();
 }
 

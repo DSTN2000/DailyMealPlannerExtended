@@ -42,6 +42,77 @@ public partial class MealPlanView : UserControl
         e.Handled = true;
     }
 
+    private async void MealPlanName_DoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not TextBlock textBlock) return;
+        if (DataContext is not MealPlanViewModel viewModel) return;
+
+        // Find the parent StackPanel
+        var stackPanel = textBlock.Parent as StackPanel;
+        if (stackPanel == null) return;
+
+        // Store the original name
+        var originalName = viewModel.CurrentMealPlan.Name;
+
+        // Create TextBox for editing
+        var textBox = new TextBox
+        {
+            Text = viewModel.CurrentMealPlan.Name,
+            FontSize = 24,
+            FontWeight = Avalonia.Media.FontWeight.Bold,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        };
+
+        // Remove TextBlock and add TextBox
+        stackPanel.Children.Remove(textBlock);
+        stackPanel.Children.Insert(0, textBox);
+
+        // Focus and select all text
+        textBox.Focus();
+        textBox.SelectAll();
+
+        var editCompleted = false;
+
+        // Handle completion of editing
+        async Task CompleteEdit()
+        {
+            if (editCompleted) return;
+            editCompleted = true;
+
+            var newName = textBox.Text?.Trim();
+
+            if (!string.IsNullOrWhiteSpace(newName))
+            {
+                viewModel.CurrentMealPlan.Name = newName;
+            }
+
+            // Remove TextBox and restore TextBlock immediately
+            stackPanel.Children.Remove(textBox);
+            stackPanel.Children.Insert(0, textBlock);
+        }
+
+        textBox.LostFocus += async (s, ev) => await CompleteEdit();
+        textBox.KeyDown += async (s, ev) =>
+        {
+            if (ev.Key == Key.Enter)
+            {
+                await CompleteEdit();
+                ev.Handled = true;
+            }
+            else if (ev.Key == Key.Escape)
+            {
+                if (!editCompleted)
+                {
+                    editCompleted = true;
+                    // Cancel - restore TextBlock without saving
+                    stackPanel.Children.Remove(textBox);
+                    stackPanel.Children.Insert(0, textBlock);
+                }
+                ev.Handled = true;
+            }
+        };
+    }
+
     private async void MealTimeName_DoubleTapped(object? sender, TappedEventArgs e)
     {
         if (sender is not TextBlock textBlock) return;
