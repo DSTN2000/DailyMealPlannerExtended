@@ -151,6 +151,7 @@ public class FavoriteMealPlansService
                     Unit = item.Product.Unit
                 };
 
+                // Exclude Image and Note from hash for performance considerations
                 var newItem = new MealPlanItem(productCopy, item.Weight);
                 newMealTime.Items.Add(newItem);
             }

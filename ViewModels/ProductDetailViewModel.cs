@@ -27,6 +27,31 @@ public partial class ProductDetailViewModel : ViewModelBase
     [ObservableProperty]
     private ProductDetailMode _mode = ProductDetailMode.Catalog;
 
+    partial void OnMealPlanItemChanged(MealPlanItem? oldValue, MealPlanItem? newValue)
+    {
+        // Unsubscribe from old item
+        if (oldValue != null)
+        {
+            oldValue.PropertyChanged -= MealPlanItem_PropertyChanged;
+        }
+
+        // Subscribe to new item
+        if (newValue != null)
+        {
+            newValue.PropertyChanged += MealPlanItem_PropertyChanged;
+        }
+
+        OnPropertyChanged(nameof(PhotoButtonText));
+    }
+
+    private void MealPlanItem_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MealPlanItem.Image))
+        {
+            OnPropertyChanged(nameof(PhotoButtonText));
+        }
+    }
+
     // Computed properties for view visibility
     public bool ShowAddToMealPlanButton => Mode == ProductDetailMode.Catalog && !(_mealPlanViewModel?.IsReadOnly ?? false);
     public bool ShowWeightControls => (Mode == ProductDetailMode.EditMealItem || Mode == ProductDetailMode.ViewMealItem) && !(_mealPlanViewModel?.IsReadOnly ?? false);
@@ -37,6 +62,8 @@ public partial class ProductDetailViewModel : ViewModelBase
     public double CurrentServings => Product?.Serving > 0 && MealPlanItem != null
         ? MealPlanItem.Weight / Product.Serving
         : 0;
+
+    public string PhotoButtonText => string.IsNullOrEmpty(MealPlanItem?.Image) ? "Add" : "Change";
 
     public ProductDetailViewModel()
     {
