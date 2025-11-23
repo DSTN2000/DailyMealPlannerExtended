@@ -86,9 +86,8 @@ public partial class MealPlanViewModel : ViewModelBase
             NotifyProgressChanged();
         }
 
-        // Reset favorite status when meal plan changes (except Name property)
-        if (e.PropertyName != nameof(DailyMealPlan.Name) &&
-            e.PropertyName != nameof(DailyMealPlan.Date))
+        // Reset favorite status when meal plan changes
+        if (e.PropertyName != nameof(DailyMealPlan.Date))
         {
             UpdateFavoriteStatus();
         }
