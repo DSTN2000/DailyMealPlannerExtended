@@ -35,6 +35,17 @@ public partial class AddToMealPlanViewModel : ViewModelBase
     public AddToMealPlanViewModel(MealPlanViewModel mealPlanViewModel)
     {
         _mealPlanViewModel = mealPlanViewModel;
+
+        // Subscribe to CurrentMealPlan changes to update AvailableMealTimes
+        _mealPlanViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(MealPlanViewModel.CurrentMealPlan))
+            {
+                OnPropertyChanged(nameof(AvailableMealTimes));
+                // Reset selected meal time when meal plan changes
+                SelectedMealTime = AvailableMealTimes.FirstOrDefault();
+            }
+        };
     }
 
     [RelayCommand]

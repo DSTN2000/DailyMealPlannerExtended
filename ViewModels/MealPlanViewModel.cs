@@ -45,6 +45,7 @@ public partial class MealPlanViewModel : ViewModelBase
 
     partial void OnSelectedDateChanged(DateTime value)
     {
+        Logger.Instance.Information("Getting the meal plan for {Date}", value.ToShortDateString());
         CurrentMealPlan = GetOrCreateMealPlan(value);
     }
 

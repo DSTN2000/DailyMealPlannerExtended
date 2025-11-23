@@ -17,7 +17,6 @@ public partial class MainWindowViewModel : ViewModelBase
         MealPlanViewModel = new MealPlanViewModel();
 
         // Create UserPreferencesViewModel with reference to MealPlanViewModel
-        // It will load preferences and update MealPlanViewModel.User automatically
         UserPreferencesViewModel = new UserPreferencesViewModel(MealPlanViewModel);
 
         FavoritesViewModel = new FavoritesViewModel(MealPlanViewModel);
