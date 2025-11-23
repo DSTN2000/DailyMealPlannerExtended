@@ -18,18 +18,8 @@ public class MealPlanService
                 Name = mt.Name,
                 Items = mt.Items.Select(item => new MealPlanItemData
                 {
-                    ProductName = item.Product.Name,
-                    Weight = item.Weight,
-                    // Store base nutritional values per 100g
-                    Calories = item.Product.Calories,
-                    Protein = item.Product.Protein,
-                    TotalFat = item.Product.TotalFat,
-                    Carbohydrates = item.Product.Carbohydrates,
-                    Sodium = item.Product.Sodium,
-                    Fiber = item.Product.Fiber,
-                    Sugar = item.Product.Sugar,
-                    ServingSize = item.Product.Serving,
-                    ServingUnit = item.Product.Unit
+                    Product = item.Product,
+                    Weight = item.Weight
                 }).ToList()
             }).ToList()
         };
@@ -67,21 +57,7 @@ public class MealPlanService
 
             foreach (var itemData in mtData.Items)
             {
-                var product = new Product
-                {
-                    Name = itemData.ProductName,
-                    Calories = itemData.Calories,
-                    Protein = itemData.Protein,
-                    TotalFat = itemData.TotalFat,
-                    Carbohydrates = itemData.Carbohydrates,
-                    Sodium = itemData.Sodium,
-                    Fiber = itemData.Fiber,
-                    Sugar = itemData.Sugar,
-                    Serving = itemData.ServingSize,
-                    Unit = itemData.ServingUnit
-                };
-
-                var mealPlanItem = new MealPlanItem(product, itemData.Weight);
+                var mealPlanItem = new MealPlanItem(itemData.Product, itemData.Weight);
                 mealTime.Items.Add(mealPlanItem);
             }
 
@@ -147,19 +123,6 @@ public class MealTimeData
 
 public class MealPlanItemData
 {
-    public string ProductName { get; set; } = string.Empty;
+    public Product Product { get; set; } = new();
     public double Weight { get; set; }
-
-    // Nutritional values per 100g (from product)
-    public double Calories { get; set; }
-    public double Protein { get; set; }
-    public double TotalFat { get; set; }
-    public double Carbohydrates { get; set; }
-    public double Sodium { get; set; }
-    public double Fiber { get; set; }
-    public double Sugar { get; set; }
-
-    // Serving info
-    public double ServingSize { get; set; }
-    public ServingUnit ServingUnit { get; set; }
 }

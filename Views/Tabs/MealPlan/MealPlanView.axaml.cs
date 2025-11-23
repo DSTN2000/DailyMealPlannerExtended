@@ -26,13 +26,15 @@ public partial class MealPlanView : UserControl
     {
         if (sender is not Border border) return;
         if (border.DataContext is not MealPlanItem mealPlanItem) return;
+        if (DataContext is not MealPlanViewModel viewModel) return;
 
         // Get the MainWindowViewModel to access ProductDetailViewModel
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel is Window window && window.DataContext is MainWindowViewModel mainViewModel)
         {
-            // Show the meal plan item in ProductDetailView with editable mode (current day)
-            mainViewModel.ProductDetailViewModel.ShowMealPlanItem(mealPlanItem, isEditable: true);
+            // Show the meal plan item in ProductDetailView
+            // isEditable is based on whether we're in read-only mode
+            mainViewModel.ProductDetailViewModel.ShowMealPlanItem(mealPlanItem, isEditable: !viewModel.IsReadOnly);
         }
     }
 

@@ -13,6 +13,8 @@ public enum ProductDetailMode
 
 public partial class ProductDetailViewModel : ViewModelBase
 {
+    private readonly MealPlanViewModel? _mealPlanViewModel;
+
     [ObservableProperty]
     private Product? _product;
 
@@ -26,9 +28,9 @@ public partial class ProductDetailViewModel : ViewModelBase
     private ProductDetailMode _mode = ProductDetailMode.Catalog;
 
     // Computed properties for view visibility
-    public bool ShowAddToMealPlanButton => Mode == ProductDetailMode.Catalog;
-    public bool ShowWeightControls => Mode == ProductDetailMode.EditMealItem || Mode == ProductDetailMode.ViewMealItem;
-    public bool IsWeightEditable => Mode == ProductDetailMode.EditMealItem;
+    public bool ShowAddToMealPlanButton => Mode == ProductDetailMode.Catalog && !(_mealPlanViewModel?.IsReadOnly ?? false);
+    public bool ShowWeightControls => (Mode == ProductDetailMode.EditMealItem || Mode == ProductDetailMode.ViewMealItem) && !(_mealPlanViewModel?.IsReadOnly ?? false);
+    public bool IsWeightEditable => Mode == ProductDetailMode.EditMealItem && !(_mealPlanViewModel?.IsReadOnly ?? false);
 
     public string UnitLabel => Product?.Unit switch
     {
@@ -42,6 +44,37 @@ public partial class ProductDetailViewModel : ViewModelBase
     public double CurrentServings => Product?.Serving > 0 && MealPlanItem != null
         ? MealPlanItem.Weight / Product.Serving
         : 0;
+
+    public ProductDetailViewModel()
+    {
+    }
+
+    public ProductDetailViewModel(MealPlanViewModel mealPlanViewModel)
+    {
+        _mealPlanViewModel = mealPlanViewModel;
+
+        // Subscribe to IsReadOnly and CurrentMealPlan changes
+        _mealPlanViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(MealPlanViewModel.IsReadOnly))
+            {
+                OnPropertyChanged(nameof(ShowAddToMealPlanButton));
+                OnPropertyChanged(nameof(ShowWeightControls));
+                OnPropertyChanged(nameof(IsWeightEditable));
+            }
+            else if (e.PropertyName == nameof(MealPlanViewModel.CurrentMealPlan))
+            {
+                // When meal plan changes, refresh product bindings by reassigning
+                // This ensures description, labels, and categories are re-rendered
+                var currentProduct = Product;
+                if (currentProduct != null)
+                {
+                    Product = null;
+                    Product = currentProduct;
+                }
+            }
+        };
+    }
 
     [RelayCommand]
     private void IncrementServing()

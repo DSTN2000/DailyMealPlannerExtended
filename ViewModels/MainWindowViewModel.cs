@@ -7,7 +7,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public MealPlanViewModel MealPlanViewModel { get; }
     public FavoritesViewModel FavoritesViewModel { get; }
     public HistoryViewModel HistoryViewModel { get; }
-    public ProductDetailViewModel ProductDetailViewModel { get; } = new();
+    public ProductDetailViewModel ProductDetailViewModel { get; }
     public AddToMealPlanViewModel AddToMealPlanViewModel { get; }
     public UserPreferencesViewModel UserPreferencesViewModel { get; }
 
@@ -18,6 +18,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // Create UserPreferencesViewModel with reference to MealPlanViewModel
         UserPreferencesViewModel = new UserPreferencesViewModel(MealPlanViewModel);
+
+        // Create ProductDetailViewModel with reference to MealPlanViewModel for read-only state
+        ProductDetailViewModel = new ProductDetailViewModel(MealPlanViewModel);
 
         FavoritesViewModel = new FavoritesViewModel(MealPlanViewModel);
         HistoryViewModel = new HistoryViewModel(MealPlanViewModel);
