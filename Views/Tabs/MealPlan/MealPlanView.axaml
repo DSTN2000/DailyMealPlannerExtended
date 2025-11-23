@@ -272,8 +272,10 @@
                         </Grid>
                         <ProgressBar Value="{Binding CaloriesProgress}"
                                     Maximum="100"
-                                    Height="8"
-                                    CornerRadius="4"/>
+                                    Height="16"
+                                    CornerRadius="8"
+                                    Foreground="{Binding CaloriesProgressColor}"
+                                    Background="#E0E0E0"/>
                         <TextBlock Text="{Binding CaloriesProgress, StringFormat='{}{0:F0}%'}"
                                   FontSize="12"
                                   Opacity="0.6"
@@ -301,8 +303,10 @@
                         </Grid>
                         <ProgressBar Value="{Binding ProteinProgress}"
                                     Maximum="100"
-                                    Height="8"
-                                    CornerRadius="4"/>
+                                    Height="16"
+                                    CornerRadius="8"
+                                    Foreground="{Binding ProteinProgressColor}"
+                                    Background="#E0E0E0"/>
                         <TextBlock Text="{Binding ProteinProgress, StringFormat='{}{0:F0}%'}"
                                   FontSize="12"
                                   Opacity="0.6"
@@ -330,8 +334,10 @@
                         </Grid>
                         <ProgressBar Value="{Binding FatProgress}"
                                     Maximum="100"
-                                    Height="8"
-                                    CornerRadius="4"/>
+                                    Height="16"
+                                    CornerRadius="8"
+                                    Foreground="{Binding FatProgressColor}"
+                                    Background="#E0E0E0"/>
                         <TextBlock Text="{Binding FatProgress, StringFormat='{}{0:F0}%'}"
                                   FontSize="12"
                                   Opacity="0.6"
@@ -359,8 +365,10 @@
                         </Grid>
                         <ProgressBar Value="{Binding CarbsProgress}"
                                     Maximum="100"
-                                    Height="8"
-                                    CornerRadius="4"/>
+                                    Height="16"
+                                    CornerRadius="8"
+                                    Foreground="{Binding CarbsProgressColor}"
+                                    Background="#E0E0E0"/>
                         <TextBlock Text="{Binding CarbsProgress, StringFormat='{}{0:F0}%'}"
                                   FontSize="12"
                                   Opacity="0.6"

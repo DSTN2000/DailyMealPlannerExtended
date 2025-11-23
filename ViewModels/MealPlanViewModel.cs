@@ -108,6 +108,10 @@ public partial class MealPlanViewModel : ViewModelBase
         OnPropertyChanged(nameof(ProteinProgress));
         OnPropertyChanged(nameof(FatProgress));
         OnPropertyChanged(nameof(CarbsProgress));
+        OnPropertyChanged(nameof(CaloriesProgressColor));
+        OnPropertyChanged(nameof(ProteinProgressColor));
+        OnPropertyChanged(nameof(FatProgressColor));
+        OnPropertyChanged(nameof(CarbsProgressColor));
     }
 
     private DailyMealPlan GetOrCreateMealPlan(DateTime date)
@@ -204,6 +208,45 @@ public partial class MealPlanViewModel : ViewModelBase
     public double CarbsProgress => User.DailyCarbohydrates > 0
         ? (CurrentMealPlan.TotalCarbohydrates / User.DailyCarbohydrates) * 100
         : 0;
+
+    // Color properties based on progress (green at 90-110%, red when far off)
+    public string CaloriesProgressColor => GetProgressColor(CaloriesProgress);
+    public string ProteinProgressColor => GetProgressColor(ProteinProgress);
+    public string FatProgressColor => GetProgressColor(FatProgress);
+    public string CarbsProgressColor => GetProgressColor(CarbsProgress);
+
+    private static string GetProgressColor(double progress)
+    {
+        // Color constants
+        const string Red = "#F44336";
+        const string Orange = "#FF9800";
+        const string Yellow = "#FFC107";
+        const string LightGreen = "#8BC34A";
+        const string Green = "#4CAF50";
+
+        // Progress thresholds
+        const double VeryLow = 40;
+        const double Low = 70;
+        const double Approaching = 85;
+        const double OptimalMin = 90;
+        const double OptimalMax = 110;
+        const double SlightlyOver = 115;
+        const double High = 130;
+        const double VeryHigh = 150;
+
+        return progress switch
+        {
+            < VeryLow => Red,
+            < Low => Orange,
+            < Approaching => Yellow,
+            < OptimalMin => LightGreen,
+            <= OptimalMax => Green,
+            < SlightlyOver => LightGreen,
+            < High => Yellow,
+            < VeryHigh => Orange,
+            _ => Red
+        };
+    }
 
     [RelayCommand]
     private void SaveDaySnapshot()
