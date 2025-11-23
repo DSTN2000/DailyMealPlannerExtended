@@ -6,6 +6,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MealPlanViewModel MealPlanViewModel { get; }
     public FavoritesViewModel FavoritesViewModel { get; }
+    public HistoryViewModel HistoryViewModel { get; }
     public ProductDetailViewModel ProductDetailViewModel { get; } = new();
     public AddToMealPlanViewModel AddToMealPlanViewModel { get; }
     public UserPreferencesViewModel UserPreferencesViewModel { get; }
@@ -16,6 +17,7 @@ public partial class MainWindowViewModel : ViewModelBase
         UserPreferencesViewModel = new UserPreferencesViewModel();
         MealPlanViewModel = new MealPlanViewModel(UserPreferencesViewModel.User);
         FavoritesViewModel = new FavoritesViewModel(MealPlanViewModel);
+        HistoryViewModel = new HistoryViewModel(MealPlanViewModel);
         AddToMealPlanViewModel = new AddToMealPlanViewModel(MealPlanViewModel);
     }
 }

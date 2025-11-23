@@ -6,6 +6,7 @@
         xmlns:userPreferences="using:DailyMealPlannerExtended.Views.UserPreferences"
         xmlns:mealPlan="using:DailyMealPlannerExtended.Views.MealPlan"
         xmlns:favorites="using:DailyMealPlannerExtended.Views.Favorites"
+        xmlns:history="using:DailyMealPlannerExtended.Views.History"
         xmlns:addToMealPlan="using:DailyMealPlannerExtended.Views.AddToMealPlan"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -55,7 +56,7 @@
                 <TabItem.Header>
                     <materialIcons:MaterialIcon Kind="Calendar" Width="24" Height="24" />
                 </TabItem.Header>
-                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Meal Plan History Page"/>
+                <history:HistoryView DataContext="{Binding HistoryViewModel}"/>
             </TabItem>
             <TabItem ToolTip.Tip="User Preferences" ToolTip.Placement="Right">
                 <TabItem.Header>

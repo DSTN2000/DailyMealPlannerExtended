@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="DailyMealPlannerExtended.Views.History.HistoryView"
+             x:DataType="vm:HistoryViewModel"
+             x:CompileBindings="True"
+             Background="Transparent">
+
+    <Design.DataContext>
+        <vm:HistoryViewModel/>
+    </Design.DataContext>
+
+    <Grid Margin="16">
+        <Border CornerRadius="16"
+               Background="{DynamicResource MaterialCardBackgroundBrush}"
+               BorderThickness="1"
+               BorderBrush="{DynamicResource MaterialDividerBrush}"
+               Padding="24">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Header -->
+                <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,20">
+                    <TextBlock Text="Meal Plan History"
+                              FontSize="24"
+                              FontWeight="Bold"/>
+                    <TextBlock Text="Select a date to view or edit your meal plan"
+                              FontSize="14"
+                              Opacity="0.7"/>
+                </StackPanel>
+
+                <!-- Calendar -->
+                <ScrollViewer Grid.Row="1">
+                    <Calendar SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
+                             FirstDayOfWeek="Monday"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Top"/>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

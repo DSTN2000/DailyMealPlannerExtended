@@ -118,6 +118,42 @@ public class DaySnapshotService
         var filePath = Path.Combine(SnapshotsFolder, fileName);
         return File.Exists(filePath);
     }
+
+    public List<DateTime> GetAllSnapshotDates()
+    {
+        var dates = new List<DateTime>();
+
+        try
+        {
+            if (!Directory.Exists(SnapshotsFolder))
+            {
+                return dates;
+            }
+
+            var files = Directory.GetFiles(SnapshotsFolder, "*-snapshot.xml");
+
+            foreach (var file in files)
+            {
+                var fileName = Path.GetFileNameWithoutExtension(file);
+                // Remove "-snapshot" suffix
+                var dateStr = fileName.Replace("-snapshot", "");
+
+                if (DateTime.TryParseExact(dateStr, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var date))
+                {
+                    dates.Add(date);
+                }
+            }
+
+            dates.Sort();
+            Logger.Instance.Information("Found {Count} snapshot dates", dates.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to get snapshot dates");
+        }
+
+        return dates;
+    }
 }
 
 // XML wrapper that contains JSON user preferences and XML meal plan
