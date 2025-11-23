@@ -9,7 +9,7 @@ public partial class DailyMealPlan : ObservableObject
     public DateTime Date { get; set; } = DateTime.Today;
 
     [ObservableProperty]
-    private string _name = $"My Meal Plan for {DateTime.Today:MMMM d, yyyy}";
+    private string _name = "";
 
     public ObservableCollection<MealTime> MealTimes { get; set; }
 

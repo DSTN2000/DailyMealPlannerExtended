@@ -142,7 +142,8 @@ public partial class MealPlanViewModel : ViewModelBase
         // Create a new meal plan with default meal times
         var mealPlan = new DailyMealPlan
         {
-            Date = date
+            Date = date,
+            Name = $"My Meal Plan for {date:MMMM d, yyyy}"
         };
 
         Logger.Instance.Information("Created new meal plan for {Date}", date.ToShortDateString());
