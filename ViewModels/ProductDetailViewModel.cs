@@ -32,13 +32,6 @@ public partial class ProductDetailViewModel : ViewModelBase
     public bool ShowWeightControls => (Mode == ProductDetailMode.EditMealItem || Mode == ProductDetailMode.ViewMealItem) && !(_mealPlanViewModel?.IsReadOnly ?? false);
     public bool IsWeightEditable => Mode == ProductDetailMode.EditMealItem && !(_mealPlanViewModel?.IsReadOnly ?? false);
 
-    public string UnitLabel => Product?.Unit switch
-    {
-        ServingUnit.g => "g",
-        ServingUnit.ml => "ml",
-        _ => "g"
-    };
-
     public double CurrentWeight => MealPlanItem?.Weight ?? 0;
 
     public double CurrentServings => Product?.Serving > 0 && MealPlanItem != null

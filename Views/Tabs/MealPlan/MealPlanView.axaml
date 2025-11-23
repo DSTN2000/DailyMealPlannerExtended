@@ -157,7 +157,8 @@
                                                                           FontWeight="Medium"/>
                                                                 <StackPanel Orientation="Horizontal" Spacing="12" Opacity="0.7">
                                                                     <TextBlock FontSize="12">
-                                                                        <Run Text="{Binding Weight, StringFormat='{}{0:F0}g'}"/>
+                                                                        <Run Text="{Binding Weight, StringFormat='{}{0:F0}'}"/>
+                                                                        <Run Text="{Binding Product.Unit}"/>
                                                                         <Run Text="•"/>
                                                                         <Run Text="{Binding Calories, StringFormat='{}{0:F0} kcal'}"/>
                                                                     </TextBlock>

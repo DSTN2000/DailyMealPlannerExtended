@@ -23,13 +23,6 @@ public partial class AddToMealPlanViewModel : ViewModelBase
 
     public ObservableCollection<MealTime> AvailableMealTimes => _mealPlanViewModel.CurrentMealPlan.MealTimes;
 
-    public string UnitLabel => Product?.Unit switch
-    {
-        ServingUnit.g => "g",
-        ServingUnit.ml => "ml",
-        _ => "g"
-    };
-
     public double CurrentServings => Product?.Serving > 0 ? Weight / Product.Serving : 0;
 
     public AddToMealPlanViewModel(MealPlanViewModel mealPlanViewModel)
@@ -108,7 +101,6 @@ public partial class AddToMealPlanViewModel : ViewModelBase
 
     partial void OnProductChanged(Product? value)
     {
-        OnPropertyChanged(nameof(UnitLabel));
         OnPropertyChanged(nameof(CurrentServings));
     }
 }
