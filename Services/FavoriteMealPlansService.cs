@@ -11,8 +11,11 @@ public class FavoriteMealPlansService
 
     public FavoriteMealPlansService()
     {
-        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var dataFolder = Path.Combine(appDataPath, "DailyMealPlannerExtended");
+        var dataFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "DailyMealPlanner",
+            "DailyMealPlannerExtended"
+        );
 
         if (!Directory.Exists(dataFolder))
         {
