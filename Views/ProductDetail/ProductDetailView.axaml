@@ -3,11 +3,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             xmlns:converters="using:DailyMealPlannerExtended.Converters"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="DailyMealPlannerExtended.Views.ProductDetail.ProductDetailView"
              x:DataType="vm:ProductDetailViewModel"
              x:CompileBindings="True">
+
+    <UserControl.Resources>
+        <converters:Base64ToImageConverter x:Key="Base64ToImageConverter"/>
+    </UserControl.Resources>
 
     <!-- Overlay Background -->
     <Grid Background="#80000000" IsVisible="{Binding IsVisible}">
@@ -278,6 +283,45 @@
                                 </Grid>
                             </StackPanel>
                         </Border>
+
+                        <!-- Photo -->
+                        <StackPanel Spacing="8" IsVisible="{Binding IsWeightEditable}">
+                            <TextBlock Text="Photo (optional)" FontSize="14" FontWeight="SemiBold"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Button Grid.Column="0"
+                                       Content="{Binding MealPlanItem.Image, Converter={x:Static StringConverters.IsNullOrEmpty}, ConverterParameter='Add Photo:Change Photo'}"
+                                       Command="{Binding SelectPhotoCommand}"
+                                       CornerRadius="8"
+                                       Padding="12,6"/>
+                                <Button Grid.Column="1"
+                                       Content="Remove"
+                                       Command="{Binding RemovePhotoCommand}"
+                                       CornerRadius="8"
+                                       Padding="12,6"
+                                       Margin="8,0,0,0"
+                                       IsVisible="{Binding MealPlanItem.Image, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            </Grid>
+                            <!-- Photo Preview -->
+                            <Border CornerRadius="12"
+                                   Background="{DynamicResource MaterialPaperBrush}"
+                                   Padding="8"
+                                   IsVisible="{Binding MealPlanItem.Image, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <Image Source="{Binding MealPlanItem.Image, Converter={StaticResource Base64ToImageConverter}}"
+                                      MaxHeight="200"
+                                      Stretch="Uniform"/>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Note -->
+                        <StackPanel Spacing="8" IsVisible="{Binding IsWeightEditable}">
+                            <TextBlock Text="Note (optional)" FontSize="14" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding MealPlanItem.Note, Mode=TwoWay}"
+                                    Watermark="Add a note about this meal item..."
+                                    AcceptsReturn="True"
+                                    TextWrapping="Wrap"
+                                    MinHeight="80"
+                                    MaxHeight="150"/>
+                        </StackPanel>
 
                     </StackPanel>
                 </StackPanel>

@@ -91,6 +91,56 @@ public partial class ProductDetailViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task SelectPhotoAsync()
+    {
+        try
+        {
+            // Get the top-level window to access the storage provider
+            var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel == null || MealPlanItem == null) return;
+
+            // Show open file dialog for images
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "Select Photo",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new Avalonia.Platform.Storage.FilePickerFileType("Image Files")
+                    {
+                        Patterns = new[] { "*.jpg", "*.jpeg", "*.png", "*.bmp", "*.gif" }
+                    }
+                }
+            });
+
+            if (files.Count > 0)
+            {
+                var filePath = files[0].Path.LocalPath;
+                var imageBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                MealPlanItem.Image = Convert.ToBase64String(imageBytes);
+                Logger.Instance.Information("Photo added to meal plan item");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to select photo");
+        }
+    }
+
+    [RelayCommand]
+    private void RemovePhoto()
+    {
+        if (MealPlanItem != null)
+        {
+            MealPlanItem.Image = null;
+            Logger.Instance.Information("Photo removed from meal plan item");
+        }
+    }
+
+    [RelayCommand]
     private void Close()
     {
         IsVisible = false;

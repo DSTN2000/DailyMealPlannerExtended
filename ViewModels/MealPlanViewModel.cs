@@ -153,6 +153,11 @@ public partial class MealPlanViewModel : ViewModelBase
             Name = $"My Meal Plan for {date:MMMM d, yyyy}"
         };
 
+        // Add default meal times
+        mealPlan.MealTimes.Add(new MealTime(MealTimeType.Breakfast));
+        mealPlan.MealTimes.Add(new MealTime(MealTimeType.Lunch));
+        mealPlan.MealTimes.Add(new MealTime(MealTimeType.Dinner));
+
         Logger.Instance.Information("Created new meal plan for {Date}", date.ToShortDateString());
         return mealPlan;
     }

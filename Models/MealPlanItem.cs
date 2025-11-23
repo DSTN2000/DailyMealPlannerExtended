@@ -10,6 +10,12 @@ public partial class MealPlanItem : ObservableObject
     [NotifyPropertyChangedFor(nameof(Calories), nameof(Protein), nameof(TotalFat), nameof(Carbohydrates), nameof(Sodium), nameof(Fiber), nameof(Sugar))]
     private double _weight = 100.0; // in grams
 
+    [ObservableProperty]
+    private string? _image; // Base64 encoded image
+
+    [ObservableProperty]
+    private string? _note; // User's note about this meal item
+
     // Calculated nutritional values (based on weight)
     public double Calories => Product.Calories * (Weight / 100.0);
     public double Protein => Product.Protein * (Weight / 100.0);

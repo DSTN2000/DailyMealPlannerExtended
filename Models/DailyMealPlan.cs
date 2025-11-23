@@ -28,11 +28,6 @@ public partial class DailyMealPlan : ObservableObject
     {
         MealTimes = new ObservableCollection<MealTime>();
         MealTimes.CollectionChanged += MealTimes_CollectionChanged;
-
-        // Initialize with default mealtimes
-        MealTimes.Add(new MealTime(MealTimeType.Breakfast));
-        MealTimes.Add(new MealTime(MealTimeType.Lunch));
-        MealTimes.Add(new MealTime(MealTimeType.Dinner));
     }
 
     private void MealTimes_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -58,7 +53,7 @@ public partial class DailyMealPlan : ObservableObject
         NotifyTotalsChanged();
     }
 
-    private void MealTime_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    internal void MealTime_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // When any meal time's totals change, update daily totals
         if (e.PropertyName?.StartsWith("Total") == true)

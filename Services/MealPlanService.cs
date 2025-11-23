@@ -8,60 +8,27 @@ public class MealPlanService
     // Reusable meal plan XML serialization (no user preferences, just the meal plan)
     public static string SerializeMealPlanToXml(DailyMealPlan mealPlan)
     {
-        var mealPlanData = new MealPlanData
-        {
-            Date = mealPlan.Date,
-            Name = mealPlan.Name,
-            MealTimes = mealPlan.MealTimes.Select(mt => new MealTimeData
-            {
-                Type = mt.Type,
-                Name = mt.Name,
-                Items = mt.Items.Select(item => new MealPlanItemData
-                {
-                    Product = item.Product,
-                    Weight = item.Weight
-                }).ToList()
-            }).ToList()
-        };
-
-        var serializer = new XmlSerializer(typeof(MealPlanData));
+        var serializer = new XmlSerializer(typeof(DailyMealPlan));
         using var stringWriter = new StringWriter();
-        serializer.Serialize(stringWriter, mealPlanData);
+        serializer.Serialize(stringWriter, mealPlan);
         return stringWriter.ToString();
     }
 
     public static DailyMealPlan? DeserializeMealPlanFromXml(string xml)
     {
-        var serializer = new XmlSerializer(typeof(MealPlanData));
+        var serializer = new XmlSerializer(typeof(DailyMealPlan));
         using var stringReader = new StringReader(xml);
-        var mealPlanData = (MealPlanData?)serializer.Deserialize(stringReader);
+        var mealPlan = (DailyMealPlan?)serializer.Deserialize(stringReader);
 
-        if (mealPlanData == null)
+        // Re-subscribe to property changes after deserialization
+        if (mealPlan != null)
         {
-            return null;
-        }
-
-        var mealPlan = new DailyMealPlan
-        {
-            Date = mealPlanData.Date,
-            Name = mealPlanData.Name
-        };
-
-        // Clear default meal times before reconstructing
-        mealPlan.MealTimes.Clear();
-
-        // Reconstruct meal times and items
-        foreach (var mtData in mealPlanData.MealTimes)
-        {
-            var mealTime = new MealTime(mtData.Type, mtData.Type == MealTimeType.Custom ? mtData.Name : null);
-
-            foreach (var itemData in mtData.Items)
+            // The CollectionChanged event handler is already set up in the constructor
+            // But we need to manually trigger subscription for existing items
+            foreach (var mealTime in mealPlan.MealTimes)
             {
-                var mealPlanItem = new MealPlanItem(itemData.Product, itemData.Weight);
-                mealTime.Items.Add(mealPlanItem);
+                mealTime.PropertyChanged += mealPlan.MealTime_PropertyChanged;
             }
-
-            mealPlan.MealTimes.Add(mealTime);
         }
 
         return mealPlan;
@@ -104,25 +71,4 @@ public class MealPlanService
             throw;
         }
     }
-}
-
-// XML-serializable meal plan structure
-public class MealPlanData
-{
-    public DateTime Date { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public List<MealTimeData> MealTimes { get; set; } = new();
-}
-
-public class MealTimeData
-{
-    public MealTimeType Type { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public List<MealPlanItemData> Items { get; set; } = new();
-}
-
-public class MealPlanItemData
-{
-    public Product Product { get; set; } = new();
-    public double Weight { get; set; }
 }
