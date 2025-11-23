@@ -33,6 +33,7 @@
                 <!-- Calendar -->
                 <ScrollViewer Grid.Row="1">
                     <Calendar SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
+                             DisplayDateEnd="{Binding Today}"
                              FirstDayOfWeek="Monday"
                              HorizontalAlignment="Center"
                              VerticalAlignment="Top"/>

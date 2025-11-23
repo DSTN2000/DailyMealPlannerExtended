@@ -17,6 +17,8 @@ public partial class HistoryViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<DateTime> _datesWithSnapshots = new();
 
+    public DateTime Today => DateTime.Today;
+
     public HistoryViewModel(MealPlanViewModel mealPlanViewModel)
     {
         _snapshotService = new DaySnapshotService();
