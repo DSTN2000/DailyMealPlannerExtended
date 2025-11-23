@@ -25,6 +25,8 @@ public partial class FavoritesViewModel : ViewModelBase
     [ObservableProperty]
     private int _totalFavorites = 0;
 
+    public bool IsReadOnly => _mealPlanViewModel?.IsReadOnly ?? false;
+
     public FavoritesViewModel()
     {
         _favoritesService = new FavoriteMealPlansService();
@@ -34,6 +36,18 @@ public partial class FavoritesViewModel : ViewModelBase
     public FavoritesViewModel(MealPlanViewModel mealPlanViewModel) : this()
     {
         _mealPlanViewModel = mealPlanViewModel;
+
+        // Subscribe to MealPlanViewModel's IsReadOnly changes
+        if (_mealPlanViewModel != null)
+        {
+            _mealPlanViewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(MealPlanViewModel.IsReadOnly))
+                {
+                    OnPropertyChanged(nameof(IsReadOnly));
+                }
+            };
+        }
     }
 
     private void LoadFavorites()

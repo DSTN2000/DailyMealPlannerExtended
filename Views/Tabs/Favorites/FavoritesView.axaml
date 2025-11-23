@@ -92,7 +92,8 @@
                                         <Button Command="{Binding $parent[UserControl].((vm:FavoritesViewModel)DataContext).LoadMealPlanCommand}"
                                                CommandParameter="{Binding}"
                                                CornerRadius="8"
-                                               Padding="12,6">
+                                               Padding="12,6"
+                                               IsVisible="{Binding $parent[UserControl].((vm:FavoritesViewModel)DataContext).IsReadOnly, Converter={x:Static BoolConverters.Not}}">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <materialIcons:MaterialIcon Kind="Download" Width="16" Height="16"/>
                                                 <TextBlock Text="Load" VerticalAlignment="Center"/>
