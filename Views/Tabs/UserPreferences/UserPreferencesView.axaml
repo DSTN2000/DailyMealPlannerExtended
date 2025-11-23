@@ -48,7 +48,8 @@
                                    Maximum="200"
                                    Value="{Binding User.Weight, Mode=TwoWay}"
                                    TickFrequency="1"
-                                   IsSnapToTickEnabled="True"/>
+                                   IsSnapToTickEnabled="True"
+                                   IsEnabled="{Binding !IsReadOnly}"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding User.Weight, StringFormat='{}{0:F0} kg'}"
                                       FontSize="14"
@@ -70,7 +71,8 @@
                                    Maximum="220"
                                    Value="{Binding User.Height, Mode=TwoWay}"
                                    TickFrequency="1"
-                                   IsSnapToTickEnabled="True"/>
+                                   IsSnapToTickEnabled="True"
+                                   IsEnabled="{Binding !IsReadOnly}"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding User.Height, StringFormat='{}{0:F0} cm'}"
                                       FontSize="14"
@@ -92,7 +94,8 @@
                                    Maximum="100"
                                    Value="{Binding User.Age, Mode=TwoWay}"
                                    TickFrequency="1"
-                                   IsSnapToTickEnabled="True"/>
+                                   IsSnapToTickEnabled="True"
+                                   IsEnabled="{Binding !IsReadOnly}"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding User.Age, StringFormat='{}{0:F0} years'}"
                                       FontSize="14"
@@ -110,7 +113,8 @@
                                   FontWeight="Medium"/>
                         <ComboBox ItemsSource="{Binding ActivityLevels}"
                                  SelectedItem="{Binding User.ActivityLevel, Mode=TwoWay}"
-                                 HorizontalAlignment="Stretch">
+                                 HorizontalAlignment="Stretch"
+                                 IsEnabled="{Binding !IsReadOnly}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate DataType="models:ActivityLevel">
                                     <TextBlock Text="{Binding}"/>
@@ -238,7 +242,8 @@
                                    Maximum="50"
                                    Value="{Binding ProteinPercentage}"
                                    TickFrequency="1"
-                                   IsSnapToTickEnabled="True"/>
+                                   IsSnapToTickEnabled="True"
+                                   IsEnabled="{Binding !IsReadOnly}"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding ProteinPercentage, StringFormat='{}{0:F0}%'}"
                                       FontSize="14"
@@ -266,7 +271,8 @@
                                    Maximum="50"
                                    Value="{Binding FatPercentage}"
                                    TickFrequency="1"
-                                   IsSnapToTickEnabled="True"/>
+                                   IsSnapToTickEnabled="True"
+                                   IsEnabled="{Binding !IsReadOnly}"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding FatPercentage, StringFormat='{}{0:F0}%'}"
                                       FontSize="14"
@@ -294,7 +300,8 @@
                                    Maximum="70"
                                    Value="{Binding CarbsPercentage}"
                                    TickFrequency="1"
-                                   IsSnapToTickEnabled="True"/>
+                                   IsSnapToTickEnabled="True"
+                                   IsEnabled="{Binding !IsReadOnly}"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding CarbsPercentage, StringFormat='{}{0:F0}%'}"
                                       FontSize="14"
@@ -314,7 +321,7 @@
             </Border>
 
             <!-- Action Buttons -->
-            <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+            <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right" IsVisible="{Binding !IsReadOnly}">
                 <Button Content="Reset to Defaults"
                        Command="{Binding ResetToDefaultsCommand}"
                        CornerRadius="12"

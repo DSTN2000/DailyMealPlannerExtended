@@ -9,9 +9,12 @@ namespace DailyMealPlannerExtended.ViewModels;
 public partial class UserPreferencesViewModel : ViewModelBase
 {
     private readonly UserPreferencesService _preferencesService;
+    private readonly MealPlanViewModel? _mealPlanViewModel;
 
     [ObservableProperty]
     private User _user = new();
+
+    public bool IsReadOnly => _mealPlanViewModel?.IsReadOnly ?? false;
 
     public ObservableCollection<ActivityLevel> ActivityLevels { get; } = new()
     {
@@ -70,9 +73,23 @@ public partial class UserPreferencesViewModel : ViewModelBase
     public double TotalPercentage => User.NutrientsSplit.p + User.NutrientsSplit.f + User.NutrientsSplit.c;
     public bool IsValidSplit => Math.Abs(TotalPercentage - 100) < 0.01;
 
-    public UserPreferencesViewModel()
+    public UserPreferencesViewModel(MealPlanViewModel? mealPlanViewModel = null)
     {
         _preferencesService = new UserPreferencesService();
+        _mealPlanViewModel = mealPlanViewModel;
+
+        // Subscribe to MealPlanViewModel's IsReadOnly changes
+        if (_mealPlanViewModel != null)
+        {
+            _mealPlanViewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(MealPlanViewModel.IsReadOnly))
+                {
+                    OnPropertyChanged(nameof(IsReadOnly));
+                }
+            };
+        }
+
         LoadPreferences();
     }
 

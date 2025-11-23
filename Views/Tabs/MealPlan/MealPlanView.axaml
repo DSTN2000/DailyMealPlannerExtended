@@ -44,7 +44,8 @@
                                Margin="8,0,0,0"
                                VerticalAlignment="Center"
                                Background="Transparent"
-                               BorderThickness="0">
+                               BorderThickness="0"
+                               IsVisible="{Binding !IsReadOnly}">
                             <Panel>
                                 <materialIcons:MaterialIcon Kind="HeartOutline"
                                                            Width="24"
@@ -62,7 +63,8 @@
 
                     <CalendarDatePicker Grid.Column="2"
                                        SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center"
+                                       IsEnabled="{Binding !IsReadOnly}"/>
                 </Grid>
 
                 <!-- Add Meal Time Button -->
@@ -72,7 +74,8 @@
                        CornerRadius="12"
                        Padding="12,6"
                        HorizontalAlignment="Left"
-                       Margin="0,0,0,16">
+                       Margin="0,0,0,16"
+                       IsVisible="{Binding !IsReadOnly}">
                     <Button.Styles>
                         <Style Selector="Button">
                             <Setter Property="Background" Value="{DynamicResource MaterialSecondaryDarkBrush}"/>
@@ -102,30 +105,37 @@
 
                                             <Button Grid.Column="1"
                                                    Command="{Binding $parent[ItemsControl].((vm:MealPlanViewModel)DataContext).MoveMealTimeUpCommand}"
-                                                   CommandParameter="{Binding}"
-                                                   CornerRadius="8"
-                                                   Padding="6"
-                                                   Margin="0,0,4,0"
-                                                   IsVisible="{Binding Type, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:MealTimeType.Custom}}">
+                                                   CommandParameter="{Binding}">
+                                                <Button.IsVisible>
+                                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                        <Binding Path="Type" Converter="{x:Static ObjectConverters.Equal}" ConverterParameter="{x:Static models:MealTimeType.Custom}"/>
+                                                        <Binding Path="$parent[ItemsControl].((vm:MealPlanViewModel)DataContext).IsReadOnly" Converter="{x:Static BoolConverters.Not}"/>
+                                                    </MultiBinding>
+                                                </Button.IsVisible>
                                                 <materialIcons:MaterialIcon Kind="ChevronUp" Width="16" Height="16"/>
                                             </Button>
 
                                             <Button Grid.Column="2"
                                                    Command="{Binding $parent[ItemsControl].((vm:MealPlanViewModel)DataContext).MoveMealTimeDownCommand}"
-                                                   CommandParameter="{Binding}"
-                                                   CornerRadius="8"
-                                                   Padding="6"
-                                                   Margin="0,0,4,0"
-                                                   IsVisible="{Binding Type, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:MealTimeType.Custom}}">
+                                                   CommandParameter="{Binding}">
+                                                <Button.IsVisible>
+                                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                        <Binding Path="Type" Converter="{x:Static ObjectConverters.Equal}" ConverterParameter="{x:Static models:MealTimeType.Custom}"/>
+                                                        <Binding Path="$parent[ItemsControl].((vm:MealPlanViewModel)DataContext).IsReadOnly" Converter="{x:Static BoolConverters.Not}"/>
+                                                    </MultiBinding>
+                                                </Button.IsVisible>
                                                 <materialIcons:MaterialIcon Kind="ChevronDown" Width="16" Height="16"/>
                                             </Button>
 
                                             <Button Grid.Column="3"
                                                    Command="{Binding $parent[ItemsControl].((vm:MealPlanViewModel)DataContext).RemoveMealTimeCommand}"
-                                                   CommandParameter="{Binding}"
-                                                   CornerRadius="8"
-                                                   Padding="6"
-                                                   IsVisible="{Binding Type, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:MealTimeType.Custom}}">
+                                                   CommandParameter="{Binding}">
+                                                <Button.IsVisible>
+                                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                        <Binding Path="Type" Converter="{x:Static ObjectConverters.Equal}" ConverterParameter="{x:Static models:MealTimeType.Custom}"/>
+                                                        <Binding Path="$parent[ItemsControl].((vm:MealPlanViewModel)DataContext).IsReadOnly" Converter="{x:Static BoolConverters.Not}"/>
+                                                    </MultiBinding>
+                                                </Button.IsVisible>
                                                 <materialIcons:MaterialIcon Kind="Delete" Width="16" Height="16"/>
                                             </Button>
                                         </Grid>
@@ -163,7 +173,8 @@
                                                                    CornerRadius="8"
                                                                    Padding="6"
                                                                    VerticalAlignment="Center"
-                                                                   Tapped="RemoveButton_Tapped">
+                                                                   Tapped="RemoveButton_Tapped"
+                                                                   IsVisible="{Binding $parent[UserControl].((vm:MealPlanViewModel)DataContext).IsReadOnly, Converter={x:Static BoolConverters.Not}}">
                                                                 <materialIcons:MaterialIcon Kind="Close" Width="16" Height="16"/>
                                                             </Button>
                                                         </Grid>
@@ -209,7 +220,8 @@
                     <Button Content="Import Meal Plan"
                            Command="{Binding ImportMealPlanCommand}"
                            CornerRadius="12"
-                           Padding="16,8">
+                           Padding="16,8"
+                           IsVisible="{Binding !IsReadOnly}">
                         <Button.Styles>
                             <Style Selector="Button">
                                 <Setter Property="Background" Value="{DynamicResource MaterialSecondaryDarkBrush}"/>
@@ -231,7 +243,8 @@
                     <Button Content="Save this day"
                            Command="{Binding SaveDaySnapshotCommand}"
                            CornerRadius="12"
-                           Padding="16,8">
+                           Padding="16,8"
+                           IsVisible="{Binding !IsReadOnly}">
                     </Button>
                 </StackPanel>
             </Grid>

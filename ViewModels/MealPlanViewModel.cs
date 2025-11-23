@@ -23,6 +23,9 @@ public partial class MealPlanViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isFavorite;
 
+    [ObservableProperty]
+    private bool _isReadOnly;
+
     public MealPlanViewModel(User user)
     {
         _user = user;
@@ -119,9 +122,22 @@ public partial class MealPlanViewModel : ViewModelBase
         var snapshot = _snapshotService.LoadSnapshot(date);
         if (snapshot != null)
         {
-            Logger.Instance.Information("Loaded meal plan from snapshot for {Date}", date.ToShortDateString());
+            // Set read-only mode for past dates with snapshots
+            IsReadOnly = date.Date < DateTime.Today;
+
+            // Load user preferences from snapshot
+            if (IsReadOnly && snapshot.UserPreferences != null)
+            {
+                User = snapshot.UserPreferences;
+            }
+
+            Logger.Instance.Information("Loaded meal plan from snapshot for {Date} (ReadOnly: {IsReadOnly})",
+                date.ToShortDateString(), IsReadOnly);
             return snapshot.MealPlan;
         }
+
+        // Not read-only for dates without snapshots
+        IsReadOnly = false;
 
         // Create a new meal plan with default meal times
         var mealPlan = new DailyMealPlan
