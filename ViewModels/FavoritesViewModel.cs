@@ -170,22 +170,8 @@ public partial class FavoritesViewModel : ViewModelBase
 
                 foreach (var item in mealTime.Items)
                 {
-                    // Create a copy of the product
-                    var productCopy = new Product
-                    {
-                        Name = item.Product.Name,
-                        Calories = item.Product.Calories,
-                        Protein = item.Product.Protein,
-                        TotalFat = item.Product.TotalFat,
-                        Carbohydrates = item.Product.Carbohydrates,
-                        Sodium = item.Product.Sodium,
-                        Fiber = item.Product.Fiber,
-                        Sugar = item.Product.Sugar,
-                        Serving = item.Product.Serving,
-                        Unit = item.Product.Unit
-                    };
-
-                    var newItem = new MealPlanItem(productCopy, item.Weight);
+                    // Use the product directly - it already has all the data from deserialization
+                    var newItem = new MealPlanItem(item.Product, item.Weight);
                     newMealTime.Items.Add(newItem);
                 }
 
