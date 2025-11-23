@@ -11,8 +11,7 @@ public partial class UserPreferencesViewModel : ViewModelBase
     private readonly UserPreferencesService _preferencesService;
     private readonly MealPlanViewModel? _mealPlanViewModel;
 
-    [ObservableProperty]
-    private User _user = new();
+    public User User => _mealPlanViewModel?.User ?? new User();
 
     public bool IsReadOnly => _mealPlanViewModel?.IsReadOnly ?? false;
 
@@ -75,10 +74,10 @@ public partial class UserPreferencesViewModel : ViewModelBase
 
     public UserPreferencesViewModel(MealPlanViewModel? mealPlanViewModel = null)
     {
-        _preferencesService = new UserPreferencesService();
         _mealPlanViewModel = mealPlanViewModel;
+        _preferencesService = new UserPreferencesService();
 
-        // Subscribe to MealPlanViewModel's IsReadOnly changes
+        // Subscribe to MealPlanViewModel's property changes
         if (_mealPlanViewModel != null)
         {
             _mealPlanViewModel.PropertyChanged += (s, e) =>
@@ -87,10 +86,18 @@ public partial class UserPreferencesViewModel : ViewModelBase
                 {
                     OnPropertyChanged(nameof(IsReadOnly));
                 }
+                else if (e.PropertyName == nameof(MealPlanViewModel.User))
+                {
+                    // When User changes in MealPlanViewModel, notify all our properties
+                    OnPropertyChanged(nameof(User));
+                    OnPropertyChanged(nameof(ProteinPercentage));
+                    OnPropertyChanged(nameof(FatPercentage));
+                    OnPropertyChanged(nameof(CarbsPercentage));
+                    OnPropertyChanged(nameof(TotalPercentage));
+                    OnPropertyChanged(nameof(IsValidSplit));
+                }
             };
         }
-
-        LoadPreferences();
     }
 
     [RelayCommand]
@@ -130,11 +137,12 @@ public partial class UserPreferencesViewModel : ViewModelBase
         try
         {
             var user = _preferencesService.LoadPreferences();
-            if (user != null)
+            if (user != null && _mealPlanViewModel != null)
             {
-                User = user;
+                _mealPlanViewModel.User = user;
 
                 // Notify UI that all percentage properties may have changed
+                OnPropertyChanged(nameof(User));
                 OnPropertyChanged(nameof(ProteinPercentage));
                 OnPropertyChanged(nameof(FatPercentage));
                 OnPropertyChanged(nameof(CarbsPercentage));

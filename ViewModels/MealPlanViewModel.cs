@@ -10,6 +10,7 @@ public partial class MealPlanViewModel : ViewModelBase
     private readonly DaySnapshotService _snapshotService;
     private readonly MealPlanService _mealPlanService;
     private readonly FavoriteMealPlansService _favoritesService;
+    private readonly UserPreferencesService _preferencesService;
 
     [ObservableProperty]
     private DateTime _selectedDate = DateTime.Today;
@@ -26,12 +27,13 @@ public partial class MealPlanViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isReadOnly;
 
-    public MealPlanViewModel(User user)
+    public MealPlanViewModel()
     {
-        _user = user;
-        _snapshotService = new DaySnapshotService();
-        _mealPlanService = new MealPlanService();
-        _favoritesService = new FavoriteMealPlansService();
+        _snapshotService = new();
+        _mealPlanService = new();
+        _favoritesService = new();
+        _preferencesService = new();
+        _user = _preferencesService.LoadPreferences() ?? new();
         _currentMealPlan = GetOrCreateMealPlan(SelectedDate);
 
         // Subscribe to property changes for progress updates
@@ -126,9 +128,10 @@ public partial class MealPlanViewModel : ViewModelBase
             IsReadOnly = date.Date < DateTime.Today;
 
             // Load user preferences from snapshot
-            if (IsReadOnly && snapshot.UserPreferences != null)
+            if (snapshot.UserPreferences != null)
             {
                 User = snapshot.UserPreferences;
+                Logger.Instance.Information("Loaded user from snapshot");
             }
 
             Logger.Instance.Information("Loaded meal plan from snapshot for {Date} (ReadOnly: {IsReadOnly})",
@@ -138,6 +141,9 @@ public partial class MealPlanViewModel : ViewModelBase
 
         // Not read-only for dates without snapshots
         IsReadOnly = false;
+
+        User = _preferencesService.LoadPreferences() ?? new();
+        Logger.Instance.Information("Loaded user from saved preferences");
 
         // Create a new meal plan with default meal times
         var mealPlan = new DailyMealPlan
