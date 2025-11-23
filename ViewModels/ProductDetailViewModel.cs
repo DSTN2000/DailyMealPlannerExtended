@@ -42,6 +42,7 @@ public partial class ProductDetailViewModel : ViewModelBase
         }
 
         OnPropertyChanged(nameof(PhotoButtonText));
+        OnPropertyChanged(nameof(ShowNoteReadOnly));
     }
 
     private void MealPlanItem_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -50,12 +51,18 @@ public partial class ProductDetailViewModel : ViewModelBase
         {
             OnPropertyChanged(nameof(PhotoButtonText));
         }
+        else if (e.PropertyName == nameof(MealPlanItem.Note))
+        {
+            OnPropertyChanged(nameof(ShowNoteReadOnly));
+        }
     }
 
     // Computed properties for view visibility
     public bool ShowAddToMealPlanButton => Mode == ProductDetailMode.Catalog && !(_mealPlanViewModel?.IsReadOnly ?? false);
     public bool ShowWeightControls => (Mode == ProductDetailMode.EditMealItem || Mode == ProductDetailMode.ViewMealItem) && !(_mealPlanViewModel?.IsReadOnly ?? false);
     public bool IsWeightEditable => Mode == ProductDetailMode.EditMealItem && !(_mealPlanViewModel?.IsReadOnly ?? false);
+    public bool ShowImageAndNote => Mode == ProductDetailMode.EditMealItem || Mode == ProductDetailMode.ViewMealItem;
+    public bool ShowNoteReadOnly => Mode == ProductDetailMode.ViewMealItem && !string.IsNullOrEmpty(MealPlanItem?.Note);
 
     public double CurrentWeight => MealPlanItem?.Weight ?? 0;
 
@@ -147,8 +154,12 @@ public partial class ProductDetailViewModel : ViewModelBase
             {
                 var filePath = files[0].Path.LocalPath;
                 var imageBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-                MealPlanItem.Image = Convert.ToBase64String(imageBytes);
-                Logger.Instance.Information("Photo added to meal plan item");
+
+                // Resize image to max height of 180px for reasonable file size
+                var resizedImageBytes = await ResizeImageAsync(imageBytes, maxHeight: 180);
+                MealPlanItem.Image = Convert.ToBase64String(resizedImageBytes);
+
+                Logger.Instance.Information("Photo added to meal plan item (resized to max height 180px)");
             }
         }
         catch (Exception ex)
@@ -219,7 +230,37 @@ public partial class ProductDetailViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowAddToMealPlanButton));
         OnPropertyChanged(nameof(ShowWeightControls));
         OnPropertyChanged(nameof(IsWeightEditable));
+        OnPropertyChanged(nameof(ShowImageAndNote));
+        OnPropertyChanged(nameof(ShowNoteReadOnly));
         OnPropertyChanged(nameof(CurrentWeight));
         OnPropertyChanged(nameof(CurrentServings));
+    }
+
+    private async Task<byte[]> ResizeImageAsync(byte[] imageBytes, int maxHeight)
+    {
+        await using var inputStream = new System.IO.MemoryStream(imageBytes);
+        using var bitmap = new Avalonia.Media.Imaging.Bitmap(inputStream);
+
+        // Calculate new dimensions maintaining aspect ratio
+        var originalWidth = bitmap.PixelSize.Width;
+        var originalHeight = bitmap.PixelSize.Height;
+
+        if (originalHeight <= maxHeight)
+        {
+            // Image is already smaller than max height, return as is
+            return imageBytes;
+        }
+
+        var scale = (double)maxHeight / originalHeight;
+        var newWidth = (int)(originalWidth * scale);
+        var newHeight = maxHeight;
+
+        // Create resized bitmap
+        var resizedBitmap = bitmap.CreateScaledBitmap(new Avalonia.PixelSize(newWidth, newHeight));
+
+        // Save to memory stream as PNG for lossless compression
+        await using var outputStream = new System.IO.MemoryStream();
+        resizedBitmap.Save(outputStream);
+        return outputStream.ToArray();
     }
 }

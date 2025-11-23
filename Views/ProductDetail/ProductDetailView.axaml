@@ -214,7 +214,7 @@
                     </StackPanel>
 
                     <!-- Right Column: Image and Note -->
-                    <StackPanel Grid.Column="1" Spacing="16" Width="240" IsVisible="{Binding ShowWeightControls}">
+                    <StackPanel Grid.Column="1" Spacing="16" Width="240" IsVisible="{Binding ShowImageAndNote}">
                         <!-- Photo Card -->
                         <Border CornerRadius="16"
                                Background="{DynamicResource MaterialPaperBrush}"
@@ -267,7 +267,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Note Card -->
+                        <!-- Note Card (Editable) -->
                         <Border CornerRadius="16"
                                Background="{DynamicResource MaterialPaperBrush}"
                                Padding="12"
@@ -284,6 +284,27 @@
                                         MinHeight="100"
                                         MaxHeight="200"
                                         CornerRadius="8"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Note Card (Read-only) -->
+                        <Border CornerRadius="16"
+                               Background="{DynamicResource MaterialPaperBrush}"
+                               Padding="12"
+                               IsVisible="{Binding ShowNoteReadOnly}">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Note"
+                                          FontSize="12"
+                                          Opacity="0.6"
+                                          FontWeight="SemiBold"/>
+                                <Border CornerRadius="8"
+                                       Background="{DynamicResource MaterialCardBackgroundBrush}"
+                                       Padding="12"
+                                       MinHeight="100">
+                                    <TextBlock Text="{Binding MealPlanItem.Note}"
+                                              TextWrapping="Wrap"
+                                              FontSize="14"/>
+                                </Border>
                             </StackPanel>
                         </Border>
                     </StackPanel>
