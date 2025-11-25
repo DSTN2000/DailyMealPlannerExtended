@@ -14,6 +14,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public UserPreferencesViewModel UserPreferencesViewModel { get; }
 
     public SupabaseAuthService? AuthService { get; }
+    public SupabaseSyncService? SyncService { get; }
     public bool IsAuthenticated => AuthService?.IsAuthenticated ?? false;
     public string? UserEmail => AuthService?.CurrentUser?.Email;
 
@@ -23,11 +24,22 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         AuthService = authService;
 
+        // Create sync service if authenticated
+        if (authService?.IsAuthenticated == true)
+        {
+            SyncService = new SupabaseSyncService(
+                authService,
+                new UserPreferencesService(),
+                new DaySnapshotService(),
+                new FavoriteMealPlansService()
+            );
+        }
+
         // Create shared instances that need to communicate
         MealPlanViewModel = new MealPlanViewModel();
 
-        // Create UserPreferencesViewModel with reference to MealPlanViewModel and AuthService
-        UserPreferencesViewModel = new UserPreferencesViewModel(MealPlanViewModel, AuthService);
+        // Create UserPreferencesViewModel with reference to MealPlanViewModel, AuthService, and SyncService
+        UserPreferencesViewModel = new UserPreferencesViewModel(MealPlanViewModel, AuthService, SyncService);
 
         // Create ProductDetailViewModel with reference to MealPlanViewModel for read-only state
         ProductDetailViewModel = new ProductDetailViewModel(MealPlanViewModel);
@@ -46,6 +58,16 @@ public partial class MainWindowViewModel : ViewModelBase
         if (IsAuthenticated)
         {
             Logger.Instance.Information("Main window initialized with authenticated user: {Email}", UserEmail);
+
+            // Trigger initial sync in background
+            if (SyncService != null)
+            {
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(1000); // Short delay to let UI load first
+                    await SyncService.SyncAllAsync();
+                });
+            }
         }
         else
         {

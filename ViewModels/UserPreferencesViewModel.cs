@@ -11,6 +11,7 @@ public partial class UserPreferencesViewModel : ViewModelBase
     private readonly UserPreferencesService _preferencesService;
     private readonly MealPlanViewModel? _mealPlanViewModel;
     private readonly SupabaseAuthService? _authService;
+    private readonly SupabaseSyncService? _syncService;
 
     public event EventHandler? LoggedOut;
 
@@ -22,6 +23,21 @@ public partial class UserPreferencesViewModel : ViewModelBase
     public bool IsLoggedIn => _authService?.IsAuthenticated ?? false;
     public string? UserEmail => _authService?.CurrentUser?.Email;
     public string LoginStatus => IsLoggedIn ? $"Signed in as {UserEmail}" : "Not signed in";
+
+    // Sync properties
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SyncNowCommand))]
+    private bool _isSyncing;
+
+    [ObservableProperty]
+    private string _syncStatus = "Not synced yet";
+
+    [ObservableProperty]
+    private DateTime? _lastSyncTime;
+
+    public string LastSyncDisplay => LastSyncTime.HasValue
+        ? $"Last synced: {LastSyncTime.Value:MMM d, yyyy h:mm tt}"
+        : "Never synced";
 
     public ObservableCollection<ActivityLevel> ActivityLevels { get; } = new()
     {
@@ -80,11 +96,27 @@ public partial class UserPreferencesViewModel : ViewModelBase
     public double TotalPercentage => User.NutrientsSplit.p + User.NutrientsSplit.f + User.NutrientsSplit.c;
     public bool IsValidSplit => Math.Abs(TotalPercentage - 100) < 0.01;
 
-    public UserPreferencesViewModel(MealPlanViewModel? mealPlanViewModel = null, SupabaseAuthService? authService = null)
+    public UserPreferencesViewModel(MealPlanViewModel? mealPlanViewModel = null, SupabaseAuthService? authService = null, SupabaseSyncService? syncService = null)
     {
         _mealPlanViewModel = mealPlanViewModel;
         _authService = authService;
+        _syncService = syncService;
         _preferencesService = new UserPreferencesService();
+
+        // Subscribe to sync service events
+        if (_syncService != null)
+        {
+            _syncService.SyncStatusChanged += (s, e) =>
+            {
+                SyncStatus = e.Status;
+            };
+
+            _syncService.SyncCompleted += (s, e) =>
+            {
+                LastSyncTime = _syncService.LastSyncTime;
+                OnPropertyChanged(nameof(LastSyncDisplay));
+            };
+        }
 
         // Subscribe to MealPlanViewModel's property changes
         if (_mealPlanViewModel != null)
@@ -169,6 +201,40 @@ public partial class UserPreferencesViewModel : ViewModelBase
             Logger.Instance.Error(ex, "Failed to log out");
         }
     }
+
+    [RelayCommand(CanExecute = nameof(CanSync))]
+    private async Task SyncNowAsync()
+    {
+        if (_syncService == null) return;
+
+        try
+        {
+            IsSyncing = true;
+            SyncStatus = "Syncing...";
+
+            var success = await _syncService.SyncAllAsync();
+
+            if (success)
+            {
+                SyncStatus = "Sync completed successfully";
+            }
+            else
+            {
+                SyncStatus = "Sync failed";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Sync failed");
+            SyncStatus = $"Sync failed: {ex.Message}";
+        }
+        finally
+        {
+            IsSyncing = false;
+        }
+    }
+
+    private bool CanSync() => IsLoggedIn && !IsSyncing;
 
     private void LoadPreferences()
     {
