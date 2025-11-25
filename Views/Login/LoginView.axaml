@@ -82,10 +82,16 @@
                         <ProgressBar Width="24" Height="24"
                                     IsIndeterminate="True"
                                     IsVisible="{Binding IsLoading}"/>
-                        <TextBlock Text="{Binding IsLoading, Converter={x:Static ObjectConverters.IsNotNull}, ConverterParameter='Signing in...:Sign in with Google'}"
+                        <TextBlock Text="Signing in..."
                                   FontSize="16"
                                   FontWeight="SemiBold"
-                                  VerticalAlignment="Center"/>
+                                  VerticalAlignment="Center"
+                                  IsVisible="{Binding IsLoading}"/>
+                        <TextBlock Text="Sign in with Google"
+                                  FontSize="16"
+                                  FontWeight="SemiBold"
+                                  VerticalAlignment="Center"
+                                  IsVisible="{Binding !IsLoading}"/>
                     </StackPanel>
                 </Button>
 
