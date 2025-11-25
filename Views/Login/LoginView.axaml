@@ -1,0 +1,140 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             xmlns:materialIcons="using:Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="DailyMealPlannerExtended.Views.LoginView"
+             x:DataType="vm:LoginViewModel">
+
+    <Grid>
+        <!-- Background gradient -->
+        <Panel Background="{DynamicResource MaterialBackgroundBrush}">
+            <Canvas>
+                <Ellipse Width="600" Height="600"
+                        Canvas.Left="-200" Canvas.Top="-200"
+                        Fill="{DynamicResource MaterialPrimaryDarkBrush}"
+                        Opacity="0.1"/>
+                <Ellipse Width="400" Height="400"
+                        Canvas.Right="-100" Canvas.Bottom="-100"
+                        Fill="{DynamicResource MaterialSecondaryDarkBrush}"
+                        Opacity="0.1"/>
+            </Canvas>
+        </Panel>
+
+        <!-- Login Card -->
+        <Border MaxWidth="450"
+                MaxHeight="550"
+                CornerRadius="24"
+                Background="{DynamicResource MaterialPaperBrush}"
+                BoxShadow="0 10 30 5 #40000000"
+                Padding="48"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+
+            <StackPanel Spacing="32" VerticalAlignment="Center">
+
+                <!-- Logo/Icon -->
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <Border Width="80" Height="80"
+                            CornerRadius="20"
+                            Background="{DynamicResource MaterialPrimaryDarkBrush}">
+                        <materialIcons:MaterialIcon Kind="RestaurantMenu"
+                                                   Width="48" Height="48"
+                                                   Foreground="White"/>
+                    </Border>
+                    <TextBlock Text="Daily Meal Planner"
+                              FontSize="28"
+                              FontWeight="Bold"
+                              HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Status Message -->
+                <Border CornerRadius="12"
+                       Background="{DynamicResource MaterialCardBackgroundBrush}"
+                       Padding="16"
+                       IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <StackPanel Spacing="8">
+                        <materialIcons:MaterialIcon Kind="{Binding HasError, Converter={x:Static ObjectConverters.IsNotNull}, ConverterParameter='Error:Info'}"
+                                                   Width="24" Height="24"
+                                                   Foreground="{Binding HasError, Converter={x:Static ObjectConverters.IsNotNull}, ConverterParameter='#F44336:#2196F3'}"
+                                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding StatusMessage}"
+                                  TextWrapping="Wrap"
+                                  TextAlignment="Center"
+                                  FontSize="14"
+                                  Opacity="0.8"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Google Sign In Button -->
+                <Button Command="{Binding SignInWithGoogleCommand}"
+                       IsEnabled="{Binding !IsLoading}"
+                       CornerRadius="12"
+                       Padding="16"
+                       HorizontalAlignment="Stretch"
+                       HorizontalContentAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <materialIcons:MaterialIcon Kind="Google"
+                                                   Width="24" Height="24"
+                                                   IsVisible="{Binding !IsLoading}"/>
+                        <ProgressBar Width="24" Height="24"
+                                    IsIndeterminate="True"
+                                    IsVisible="{Binding IsLoading}"/>
+                        <TextBlock Text="{Binding IsLoading, Converter={x:Static ObjectConverters.IsNotNull}, ConverterParameter='Signing in...:Sign in with Google'}"
+                                  FontSize="16"
+                                  FontWeight="SemiBold"
+                                  VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Divider -->
+                <Grid ColumnDefinitions="*,Auto,*" Margin="0,8">
+                    <Border Grid.Column="0"
+                           Height="1"
+                           Background="{DynamicResource MaterialDividerBrush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,16,0"/>
+                    <TextBlock Grid.Column="1"
+                              Text="or"
+                              Opacity="0.5"
+                              FontSize="12"/>
+                    <Border Grid.Column="2"
+                           Height="1"
+                           Background="{DynamicResource MaterialDividerBrush}"
+                           VerticalAlignment="Center"
+                           Margin="16,0,0,0"/>
+                </Grid>
+
+                <!-- Continue Offline Button -->
+                <Button Command="{Binding ContinueOfflineCommand}"
+                       IsEnabled="{Binding !IsLoading}"
+                       CornerRadius="12"
+                       Padding="12"
+                       HorizontalAlignment="Stretch"
+                       HorizontalContentAlignment="Center"
+                       Classes="Flat">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <materialIcons:MaterialIcon Kind="CloudOffOutline"
+                                                   Width="20" Height="20"
+                                                   Opacity="0.7"/>
+                        <TextBlock Text="Continue Offline"
+                                  FontSize="14"
+                                  Opacity="0.7"
+                                  VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Info Text -->
+                <TextBlock Text="Sign in to sync your data across devices"
+                          TextAlignment="Center"
+                          FontSize="12"
+                          Opacity="0.5"
+                          TextWrapping="Wrap"
+                          Margin="0,16,0,0"/>
+
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

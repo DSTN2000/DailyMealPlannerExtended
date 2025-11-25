@@ -1,4 +1,6 @@
-﻿namespace DailyMealPlannerExtended.ViewModels;
+﻿using DailyMealPlannerExtended.Services;
+
+namespace DailyMealPlannerExtended.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
@@ -11,8 +13,14 @@ public partial class MainWindowViewModel : ViewModelBase
     public AddToMealPlanViewModel AddToMealPlanViewModel { get; }
     public UserPreferencesViewModel UserPreferencesViewModel { get; }
 
-    public MainWindowViewModel()
+    public SupabaseAuthService? AuthService { get; }
+    public bool IsAuthenticated => AuthService?.IsAuthenticated ?? false;
+    public string? UserEmail => AuthService?.CurrentUser?.Email;
+
+    public MainWindowViewModel(SupabaseAuthService? authService = null)
     {
+        AuthService = authService;
+
         // Create shared instances that need to communicate
         MealPlanViewModel = new MealPlanViewModel();
 
@@ -25,5 +33,14 @@ public partial class MainWindowViewModel : ViewModelBase
         FavoritesViewModel = new FavoritesViewModel(MealPlanViewModel);
         HistoryViewModel = new HistoryViewModel(MealPlanViewModel);
         AddToMealPlanViewModel = new AddToMealPlanViewModel(MealPlanViewModel);
+
+        if (IsAuthenticated)
+        {
+            Logger.Instance.Information("Main window initialized with authenticated user: {Email}", UserEmail);
+        }
+        else
+        {
+            Logger.Instance.Information("Main window initialized in offline mode");
+        }
     }
 }
