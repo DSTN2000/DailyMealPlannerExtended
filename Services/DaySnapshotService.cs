@@ -1,25 +1,55 @@
-using System.Xml.Serialization;
+using Microsoft.Data.Sqlite;
 using DailyMealPlannerExtended.Models;
 
 namespace DailyMealPlannerExtended.Services;
 
 public class DaySnapshotService
 {
-    private static readonly string AppDataFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "DailyMealPlanner",
-        "DailyMealPlannerExtended"
-    );
-
-    private static readonly string SnapshotsFolder = Path.Combine(AppDataFolder, "Snapshots");
+    private readonly string _databasePath;
+    private readonly string _connectionString;
 
     public DaySnapshotService()
     {
-        // Ensure the snapshots folder exists
-        if (!Directory.Exists(SnapshotsFolder))
+        var dataFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "DailyMealPlanner",
+            "DailyMealPlannerExtended"
+        );
+
+        if (!Directory.Exists(dataFolder))
         {
-            Directory.CreateDirectory(SnapshotsFolder);
-            Logger.Instance.Information("Created snapshots folder: {Folder}", SnapshotsFolder);
+            Directory.CreateDirectory(dataFolder);
+        }
+
+        _databasePath = Path.Combine(dataFolder, "snapshots.db");
+        _connectionString = $"Data Source={_databasePath}";
+
+        InitializeDatabase();
+    }
+
+    private void InitializeDatabase()
+    {
+        try
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var createTableCommand = connection.CreateCommand();
+            createTableCommand.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Snapshots (
+                    Date TEXT PRIMARY KEY,
+                    UserPreferencesJson TEXT NOT NULL,
+                    MealPlanXml TEXT NOT NULL,
+                    CreatedAt TEXT NOT NULL
+                )";
+            createTableCommand.ExecuteNonQuery();
+
+            Logger.Instance.Information("Snapshots database initialized at: {Path}", _databasePath);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to initialize snapshots database");
+            throw;
         }
     }
 
@@ -33,22 +63,25 @@ public class DaySnapshotService
             // Reuse MealPlanService serialization for MealPlan -> XML
             var mealPlanXml = MealPlanService.SerializeMealPlanToXml(mealPlan);
 
-            // Create the wrapper snapshot
-            var snapshot = new DaySnapshotXml
-            {
-                Date = mealPlan.Date,
-                UserPreferencesJson = userJson,
-                MealPlanXml = mealPlanXml
-            };
+            var dateStr = mealPlan.Date.ToString("yyyy-MM-dd");
 
-            var fileName = $"{mealPlan.Date:yyyy-MM-dd}-snapshot.xml";
-            var filePath = Path.Combine(SnapshotsFolder, fileName);
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
 
-            var serializer = new XmlSerializer(typeof(DaySnapshotXml));
-            using var writer = new StreamWriter(filePath);
-            serializer.Serialize(writer, snapshot);
+            // Use INSERT OR REPLACE to update if exists, insert if not
+            var command = connection.CreateCommand();
+            command.CommandText = @"
+                INSERT OR REPLACE INTO Snapshots (Date, UserPreferencesJson, MealPlanXml, CreatedAt)
+                VALUES ($date, $userJson, $mealPlanXml, $createdAt)";
 
-            Logger.Instance.Information("Day snapshot saved to: {Path}", filePath);
+            command.Parameters.AddWithValue("$date", dateStr);
+            command.Parameters.AddWithValue("$userJson", userJson);
+            command.Parameters.AddWithValue("$mealPlanXml", mealPlanXml);
+            command.Parameters.AddWithValue("$createdAt", DateTime.Now.ToString("o"));
+
+            command.ExecuteNonQuery();
+
+            Logger.Instance.Information("Day snapshot saved to database for date: {Date}", dateStr);
         }
         catch (Exception ex)
         {
@@ -61,27 +94,28 @@ public class DaySnapshotService
     {
         try
         {
-            var fileName = $"{date:yyyy-MM-dd}-snapshot.xml";
-            var filePath = Path.Combine(SnapshotsFolder, fileName);
+            var dateStr = date.ToString("yyyy-MM-dd");
 
-            if (!File.Exists(filePath))
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT UserPreferencesJson, MealPlanXml FROM Snapshots WHERE Date = $date";
+            command.Parameters.AddWithValue("$date", dateStr);
+
+            using var reader = command.ExecuteReader();
+
+            if (!reader.Read())
             {
                 Logger.Instance.Information("No snapshot found for date: {Date}", date.ToShortDateString());
                 return null;
             }
 
-            var serializer = new XmlSerializer(typeof(DaySnapshotXml));
-            using var reader = new StreamReader(filePath);
-            var snapshotXml = (DaySnapshotXml?)serializer.Deserialize(reader);
-
-            if (snapshotXml == null)
-            {
-                Logger.Instance.Warning("Failed to deserialize snapshot XML");
-                return null;
-            }
+            var userJson = reader.GetString(0);
+            var mealPlanXml = reader.GetString(1);
 
             // Reuse UserPreferencesService deserialization for JSON -> User
-            var user = UserPreferencesService.DeserializeUserFromJson(snapshotXml.UserPreferencesJson);
+            var user = UserPreferencesService.DeserializeUserFromJson(userJson);
             if (user == null)
             {
                 Logger.Instance.Warning("Failed to deserialize user preferences from snapshot");
@@ -89,7 +123,7 @@ public class DaySnapshotService
             }
 
             // Reuse MealPlanService deserialization for XML -> MealPlan
-            var mealPlan = MealPlanService.DeserializeMealPlanFromXml(snapshotXml.MealPlanXml);
+            var mealPlan = MealPlanService.DeserializeMealPlanFromXml(mealPlanXml);
             if (mealPlan == null)
             {
                 Logger.Instance.Warning("Failed to deserialize meal plan from snapshot");
@@ -102,7 +136,7 @@ public class DaySnapshotService
                 UserPreferences = user
             };
 
-            Logger.Instance.Information("Day snapshot loaded from: {Path}", filePath);
+            Logger.Instance.Information("Day snapshot loaded from database for date: {Date}", dateStr);
             return daySnapshot;
         }
         catch (Exception ex)
@@ -114,9 +148,25 @@ public class DaySnapshotService
 
     public bool HasSnapshot(DateTime date)
     {
-        var fileName = $"{date:yyyy-MM-dd}-snapshot.xml";
-        var filePath = Path.Combine(SnapshotsFolder, fileName);
-        return File.Exists(filePath);
+        try
+        {
+            var dateStr = date.ToString("yyyy-MM-dd");
+
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM Snapshots WHERE Date = $date";
+            command.Parameters.AddWithValue("$date", dateStr);
+
+            var count = (long)command.ExecuteScalar()!;
+            return count > 0;
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to check snapshot existence for date: {Date}", date.ToShortDateString());
+            return false;
+        }
     }
 
     public List<DateTime> GetAllSnapshotDates()
@@ -125,26 +175,23 @@ public class DaySnapshotService
 
         try
         {
-            if (!Directory.Exists(SnapshotsFolder))
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT Date FROM Snapshots ORDER BY Date";
+
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
             {
-                return dates;
-            }
-
-            var files = Directory.GetFiles(SnapshotsFolder, "*-snapshot.xml");
-
-            foreach (var file in files)
-            {
-                var fileName = Path.GetFileNameWithoutExtension(file);
-                // Remove "-snapshot" suffix
-                var dateStr = fileName.Replace("-snapshot", "");
-
+                var dateStr = reader.GetString(0);
                 if (DateTime.TryParseExact(dateStr, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var date))
                 {
                     dates.Add(date);
                 }
             }
 
-            dates.Sort();
             Logger.Instance.Information("Found {Count} snapshot dates", dates.Count);
         }
         catch (Exception ex)
@@ -154,12 +201,4 @@ public class DaySnapshotService
 
         return dates;
     }
-}
-
-// XML wrapper that contains JSON user preferences and XML meal plan
-public class DaySnapshotXml
-{
-    public DateTime Date { get; set; }
-    public string UserPreferencesJson { get; set; } = string.Empty;
-    public string MealPlanXml { get; set; } = string.Empty;
 }
