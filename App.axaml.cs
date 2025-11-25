@@ -71,6 +71,9 @@ public partial class App : Application
 
     private void ShowLoginScreen(IClassicDesktopStyleApplicationLifetime desktop)
     {
+        // Initialize new auth service for fresh login
+        _authService = new SupabaseAuthService();
+
         var loginViewModel = new LoginViewModel();
 
         loginViewModel.LoginSuccessful += (s, e) =>
@@ -83,10 +86,11 @@ public partial class App : Application
         loginViewModel.ContinueOfflineRequested += (s, e) =>
         {
             // User chose to continue offline
+            _authService = null;
             ShowMainWindow(desktop);
         };
 
-        desktop.MainWindow = new Window
+        var loginWindow = new Window
         {
             Content = new LoginView { DataContext = loginViewModel },
             Width = 900,
@@ -94,11 +98,31 @@ public partial class App : Application
             WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.CenterScreen,
             CanResize = false
         };
+
+        // If main window exists, close it
+        if (desktop.MainWindow != null && desktop.MainWindow is MainWindow)
+        {
+            var mainWindow = desktop.MainWindow;
+            desktop.MainWindow = loginWindow;
+            loginWindow.Show();
+            mainWindow.Close();
+        }
+        else
+        {
+            desktop.MainWindow = loginWindow;
+        }
     }
 
     private void ShowMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
     {
         _mainWindowViewModel = new MainWindowViewModel(_authService);
+
+        // Subscribe to logout event
+        _mainWindowViewModel.UserLoggedOut += (s, e) =>
+        {
+            Logger.Instance.Information("User logged out, showing login screen");
+            ShowLoginScreen(desktop);
+        };
 
         var mainWindow = new MainWindow
         {

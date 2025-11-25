@@ -17,6 +17,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsAuthenticated => AuthService?.IsAuthenticated ?? false;
     public string? UserEmail => AuthService?.CurrentUser?.Email;
 
+    public event EventHandler? UserLoggedOut;
+
     public MainWindowViewModel(SupabaseAuthService? authService = null)
     {
         AuthService = authService;
@@ -24,8 +26,8 @@ public partial class MainWindowViewModel : ViewModelBase
         // Create shared instances that need to communicate
         MealPlanViewModel = new MealPlanViewModel();
 
-        // Create UserPreferencesViewModel with reference to MealPlanViewModel
-        UserPreferencesViewModel = new UserPreferencesViewModel(MealPlanViewModel);
+        // Create UserPreferencesViewModel with reference to MealPlanViewModel and AuthService
+        UserPreferencesViewModel = new UserPreferencesViewModel(MealPlanViewModel, AuthService);
 
         // Create ProductDetailViewModel with reference to MealPlanViewModel for read-only state
         ProductDetailViewModel = new ProductDetailViewModel(MealPlanViewModel);
@@ -33,6 +35,13 @@ public partial class MainWindowViewModel : ViewModelBase
         FavoritesViewModel = new FavoritesViewModel(MealPlanViewModel);
         HistoryViewModel = new HistoryViewModel(MealPlanViewModel);
         AddToMealPlanViewModel = new AddToMealPlanViewModel(MealPlanViewModel);
+
+        // Subscribe to logout event
+        UserPreferencesViewModel.LoggedOut += (s, e) =>
+        {
+            Logger.Instance.Information("User logged out, triggering app-level logout event");
+            UserLoggedOut?.Invoke(this, EventArgs.Empty);
+        };
 
         if (IsAuthenticated)
         {

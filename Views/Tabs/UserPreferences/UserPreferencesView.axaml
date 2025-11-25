@@ -26,6 +26,65 @@
                           Opacity="0.7"/>
             </StackPanel>
 
+            <!-- Account Section -->
+            <Border CornerRadius="16"
+                   Background="{DynamicResource MaterialCardBackgroundBrush}"
+                   BorderThickness="1"
+                   BorderBrush="{DynamicResource MaterialDividerBrush}"
+                   Padding="24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Account"
+                              FontSize="20"
+                              FontWeight="SemiBold"/>
+
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Login Status Icon - Logged In -->
+                        <materialIcons:MaterialIcon Grid.Column="0"
+                                                   Kind="AccountCheck"
+                                                   Width="24"
+                                                   Height="24"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,12,0"
+                                                   IsVisible="{Binding IsLoggedIn}"/>
+
+                        <!-- Login Status Icon - Not Logged In -->
+                        <materialIcons:MaterialIcon Grid.Column="0"
+                                                   Kind="AccountOff"
+                                                   Width="24"
+                                                   Height="24"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,12,0"
+                                                   Opacity="0.5"
+                                                   IsVisible="{Binding !IsLoggedIn}"/>
+
+                        <!-- Login Status Text -->
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding LoginStatus}"
+                                      FontSize="14"
+                                      FontWeight="Medium"/>
+                            <TextBlock Text="Your data is synchronized across devices"
+                                      FontSize="12"
+                                      Opacity="0.6"
+                                      IsVisible="{Binding IsLoggedIn}"/>
+                        </StackPanel>
+
+                        <!-- Log Out Button -->
+                        <Button Grid.Column="2"
+                               Content="Log Out"
+                               Command="{Binding LogOutCommand}"
+                               CornerRadius="12"
+                               Padding="16,8"
+                               IsVisible="{Binding IsLoggedIn}">
+                            <Button.Styles>
+                                <Style Selector="Button">
+                                    <Setter Property="Background" Value="{DynamicResource MaterialSecondaryDarkBrush}"/>
+                                </Style>
+                            </Button.Styles>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- Personal Information -->
             <Border CornerRadius="16"
                    Background="{DynamicResource MaterialCardBackgroundBrush}"

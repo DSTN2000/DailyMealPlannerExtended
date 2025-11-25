@@ -10,10 +10,18 @@ public partial class UserPreferencesViewModel : ViewModelBase
 {
     private readonly UserPreferencesService _preferencesService;
     private readonly MealPlanViewModel? _mealPlanViewModel;
+    private readonly SupabaseAuthService? _authService;
+
+    public event EventHandler? LoggedOut;
 
     public User User => _mealPlanViewModel?.User ?? new User();
 
     public bool IsReadOnly => _mealPlanViewModel?.IsReadOnly ?? false;
+
+    // Auth properties
+    public bool IsLoggedIn => _authService?.IsAuthenticated ?? false;
+    public string? UserEmail => _authService?.CurrentUser?.Email;
+    public string LoginStatus => IsLoggedIn ? $"Signed in as {UserEmail}" : "Not signed in";
 
     public ObservableCollection<ActivityLevel> ActivityLevels { get; } = new()
     {
@@ -72,9 +80,10 @@ public partial class UserPreferencesViewModel : ViewModelBase
     public double TotalPercentage => User.NutrientsSplit.p + User.NutrientsSplit.f + User.NutrientsSplit.c;
     public bool IsValidSplit => Math.Abs(TotalPercentage - 100) < 0.01;
 
-    public UserPreferencesViewModel(MealPlanViewModel? mealPlanViewModel = null)
+    public UserPreferencesViewModel(MealPlanViewModel? mealPlanViewModel = null, SupabaseAuthService? authService = null)
     {
         _mealPlanViewModel = mealPlanViewModel;
+        _authService = authService;
         _preferencesService = new UserPreferencesService();
 
         // Subscribe to MealPlanViewModel's property changes
@@ -96,6 +105,17 @@ public partial class UserPreferencesViewModel : ViewModelBase
                     OnPropertyChanged(nameof(TotalPercentage));
                     OnPropertyChanged(nameof(IsValidSplit));
                 }
+            };
+        }
+
+        // Subscribe to auth state changes
+        if (_authService != null)
+        {
+            _authService.AuthStateChanged += (s, isAuthenticated) =>
+            {
+                OnPropertyChanged(nameof(IsLoggedIn));
+                OnPropertyChanged(nameof(UserEmail));
+                OnPropertyChanged(nameof(LoginStatus));
             };
         }
     }
@@ -129,6 +149,24 @@ public partial class UserPreferencesViewModel : ViewModelBase
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to save preferences");
+        }
+    }
+
+    [RelayCommand]
+    private async Task LogOutAsync()
+    {
+        try
+        {
+            if (_authService != null)
+            {
+                await _authService.SignOutAsync();
+                Logger.Instance.Information("User logged out successfully");
+                LoggedOut?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to log out");
         }
     }
 
