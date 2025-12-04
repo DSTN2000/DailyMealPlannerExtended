@@ -6,6 +6,7 @@
         xmlns:userPreferences="using:DailyMealPlannerExtended.Views.UserPreferences"
         xmlns:mealPlan="using:DailyMealPlannerExtended.Views.MealPlan"
         xmlns:favorites="using:DailyMealPlannerExtended.Views.Favorites"
+        xmlns:discover="using:DailyMealPlannerExtended.Views.Discover"
         xmlns:history="using:DailyMealPlannerExtended.Views.History"
         xmlns:addToMealPlan="using:DailyMealPlannerExtended.Views.AddToMealPlan"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -46,6 +47,12 @@
                     <materialIcons:MaterialIcon Kind="Heart" Width="24" Height="24" />
                 </TabItem.Header>
                 <favorites:FavoritesView DataContext="{Binding FavoritesViewModel}"/>
+            </TabItem>
+            <TabItem ToolTip.Tip="Discover" ToolTip.Placement="Right">
+                <TabItem.Header>
+                    <materialIcons:MaterialIcon Kind="BullseyeArrow" Width="24" Height="24" />
+                </TabItem.Header>
+                <discover:DiscoverView DataContext="{Binding DiscoverViewModel}"/>
             </TabItem>
             <TabItem IsEnabled="False" Height="1000">
                 <TabItem.Header>

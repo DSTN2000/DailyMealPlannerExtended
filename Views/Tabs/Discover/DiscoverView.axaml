@@ -1,0 +1,337 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             xmlns:models="using:DailyMealPlannerExtended.Models"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="DailyMealPlannerExtended.Views.Discover.DiscoverView"
+             x:DataType="vm:DiscoverViewModel"
+             x:CompileBindings="True"
+             Background="Transparent">
+
+    <Design.DataContext>
+        <vm:DiscoverViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16">
+        <!-- Header -->
+        <Border Grid.Row="0"
+               CornerRadius="16"
+               Background="{DynamicResource MaterialCardBackgroundBrush}"
+               BorderThickness="1"
+               BorderBrush="{DynamicResource MaterialDividerBrush}"
+               Padding="24"
+               Margin="0,0,0,16">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Discover Meal Plans"
+                              FontSize="24"
+                              FontWeight="Bold"/>
+                    <TextBlock Text="{Binding StatusMessage}"
+                              FontSize="14"
+                              Opacity="0.7"/>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                       Command="{Binding RefreshCommand}"
+                       CornerRadius="8"
+                       Padding="12,8"
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding IsAuthenticated}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="Refresh" Width="18" Height="18"/>
+                        <TextBlock Text="Refresh" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Meal Plans Grid -->
+        <Border Grid.Row="1"
+               CornerRadius="16"
+               Background="{DynamicResource MaterialCardBackgroundBrush}"
+               BorderThickness="1"
+               BorderBrush="{DynamicResource MaterialDividerBrush}"
+               Padding="24">
+            <Grid>
+                <!-- Loading State -->
+                <StackPanel IsVisible="{Binding IsLoading}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Spacing="16">
+                    <materialIcons:MaterialIcon Kind="Loading"
+                                               Width="64"
+                                               Height="64"
+                                               Opacity="0.5"
+                                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Loading shared meal plans..."
+                              FontSize="18"
+                              Opacity="0.7"
+                              TextAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Empty State (Not Authenticated) -->
+                <StackPanel IsVisible="{Binding !IsAuthenticated}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Spacing="16">
+                    <materialIcons:MaterialIcon Kind="AccountOff"
+                                               Width="64"
+                                               Height="64"
+                                               Opacity="0.3"
+                                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Please log in to discover meal plans"
+                              FontSize="18"
+                              Opacity="0.5"
+                              TextAlignment="Center"/>
+                    <TextBlock Text="Share your meal plans and discover what others are eating!"
+                              FontSize="14"
+                              Opacity="0.4"
+                              TextAlignment="Center"
+                              MaxWidth="400"
+                              TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Empty State (No Meal Plans) -->
+                <StackPanel IsVisible="{Binding IsAuthenticated}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Spacing="16">
+                    <StackPanel.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="!IsLoading"/>
+                            <Binding Path="!TotalMealPlans"/>
+                        </MultiBinding>
+                    </StackPanel.IsVisible>
+                    <materialIcons:MaterialIcon Kind="EarthOff"
+                                               Width="64"
+                                               Height="64"
+                                               Opacity="0.3"
+                                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="No shared meal plans yet"
+                              FontSize="18"
+                              Opacity="0.5"
+                              TextAlignment="Center"/>
+                    <TextBlock Text="Be the first to share a meal plan!"
+                              FontSize="14"
+                              Opacity="0.4"
+                              TextAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Meal Plans List -->
+                <ScrollViewer>
+                    <ScrollViewer.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="!IsLoading"/>
+                            <Binding Path="TotalMealPlans"/>
+                        </MultiBinding>
+                    </ScrollViewer.IsVisible>
+                    <ItemsControl ItemsSource="{Binding CurrentPageMealPlans}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:DailyMealPlan">
+                                <Border CornerRadius="12"
+                                       Background="{DynamicResource MaterialPaperBrush}"
+                                       Padding="20"
+                                       Margin="0,0,0,16">
+                                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                        <!-- Header -->
+                                        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="{Binding Name}"
+                                                      FontSize="20"
+                                                      FontWeight="SemiBold"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock FontSize="13" Opacity="0.6">
+                                                    <Run Text="By"/>
+                                                    <Run Text="{Binding AuthorEmail}" FontWeight="Medium"/>
+                                                </TextBlock>
+                                                <TextBlock Text="•" FontSize="13" Opacity="0.4"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <materialIcons:MaterialIcon Kind="Heart"
+                                                                               Width="14"
+                                                                               Height="14"
+                                                                               Opacity="0.6"
+                                                                               VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding LikesCount}"
+                                                              FontSize="13"
+                                                              Opacity="0.6"
+                                                              VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Action Buttons -->
+                                        <StackPanel Grid.Row="0" Grid.Column="1"
+                                                   Orientation="Horizontal"
+                                                   Spacing="8"
+                                                   VerticalAlignment="Top">
+                                            <!-- Like Button (Liked) -->
+                                            <Button Command="{Binding $parent[UserControl].((vm:DiscoverViewModel)DataContext).ToggleLikeCommand}"
+                                                   CommandParameter="{Binding}"
+                                                   CornerRadius="8"
+                                                   Padding="8,6"
+                                                   IsVisible="{Binding IsLikedByCurrentUser}">
+                                                <materialIcons:MaterialIcon Kind="Heart" Width="20" Height="20"/>
+                                                <Button.Styles>
+                                                    <Style Selector="Button">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                    </Style>
+                                                </Button.Styles>
+                                            </Button>
+
+                                            <!-- Like Button (Not Liked) -->
+                                            <Button Command="{Binding $parent[UserControl].((vm:DiscoverViewModel)DataContext).ToggleLikeCommand}"
+                                                   CommandParameter="{Binding}"
+                                                   CornerRadius="8"
+                                                   Padding="8,6"
+                                                   IsVisible="{Binding !IsLikedByCurrentUser}">
+                                                <materialIcons:MaterialIcon Kind="HeartOutline" Width="20" Height="20"/>
+                                                <Button.Styles>
+                                                    <Style Selector="Button">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                    </Style>
+                                                </Button.Styles>
+                                            </Button>
+
+                                            <!-- Add to Favorites Button -->
+                                            <Button Command="{Binding $parent[UserControl].((vm:DiscoverViewModel)DataContext).AddToFavoritesCommand}"
+                                                   CommandParameter="{Binding}"
+                                                   CornerRadius="8"
+                                                   Padding="8,6"
+                                                   ToolTip.Tip="Add to Favorites">
+                                                <materialIcons:MaterialIcon Kind="Star" Width="20" Height="20"/>
+                                            </Button>
+
+                                            <!-- Load Button -->
+                                            <Button Command="{Binding $parent[UserControl].((vm:DiscoverViewModel)DataContext).LoadMealPlanCommand}"
+                                                   CommandParameter="{Binding}"
+                                                   CornerRadius="8"
+                                                   Padding="12,6"
+                                                   IsVisible="{Binding $parent[UserControl].((vm:DiscoverViewModel)DataContext).IsReadOnly, Converter={x:Static BoolConverters.Not}}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <materialIcons:MaterialIcon Kind="Download" Width="16" Height="16"/>
+                                                    <TextBlock Text="Load" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <Button.Styles>
+                                                    <Style Selector="Button">
+                                                        <Setter Property="Background" Value="{DynamicResource MaterialSecondaryDarkBrush}"/>
+                                                    </Style>
+                                                </Button.Styles>
+                                            </Button>
+                                        </StackPanel>
+
+                                        <!-- Nutritional Summary -->
+                                        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                               CornerRadius="8"
+                                               Background="{DynamicResource MaterialPrimaryLightBrush}"
+                                               Padding="12"
+                                               Margin="0,12,0,0"
+                                               Opacity="0.8">
+                                            <StackPanel Orientation="Horizontal" Spacing="20">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Calories" FontSize="11" Opacity="0.7"/>
+                                                    <TextBlock Text="{Binding TotalCalories, StringFormat='{}{0:F0} kcal'}"
+                                                              FontSize="14"
+                                                              FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Protein" FontSize="11" Opacity="0.7"/>
+                                                    <TextBlock Text="{Binding TotalProtein, StringFormat='{}{0:F1}g'}"
+                                                              FontSize="14"
+                                                              FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Fat" FontSize="11" Opacity="0.7"/>
+                                                    <TextBlock Text="{Binding TotalFat, StringFormat='{}{0:F1}g'}"
+                                                              FontSize="14"
+                                                              FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Carbs" FontSize="11" Opacity="0.7"/>
+                                                    <TextBlock Text="{Binding TotalCarbohydrates, StringFormat='{}{0:F1}g'}"
+                                                              FontSize="14"
+                                                              FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Meal Times Preview -->
+                                        <ItemsControl Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                                     ItemsSource="{Binding MealTimes}"
+                                                     Margin="0,12,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="models:MealTime">
+                                                    <StackPanel Spacing="4" Margin="0,0,0,8">
+                                                        <TextBlock Text="{Binding Name}"
+                                                                  FontSize="13"
+                                                                  FontWeight="Medium"
+                                                                  Opacity="0.8"/>
+                                                        <TextBlock FontSize="12" Opacity="0.6">
+                                                            <Run Text="{Binding Items.Count}"/>
+                                                            <Run Text="items"/>
+                                                            <Run Text="•"/>
+                                                            <Run Text="{Binding TotalCalories, StringFormat='{}{0:F0} kcal'}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Pagination -->
+        <Border Grid.Row="2"
+               CornerRadius="16"
+               Background="{DynamicResource MaterialCardBackgroundBrush}"
+               BorderThickness="1"
+               BorderBrush="{DynamicResource MaterialDividerBrush}"
+               Padding="20"
+               Margin="0,16,0,0">
+            <Border.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="!IsLoading"/>
+                    <Binding Path="TotalMealPlans"/>
+                </MultiBinding>
+            </Border.IsVisible>
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0"
+                       Command="{Binding GoToPreviousPageCommand}"
+                       CornerRadius="8"
+                       Padding="12,8">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="ChevronLeft" Width="20" Height="20"/>
+                        <TextBlock Text="Previous" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <StackPanel Grid.Column="1"
+                           Orientation="Horizontal"
+                           Spacing="8"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center">
+                    <TextBlock Text="Page" FontSize="14" Opacity="0.7"/>
+                    <TextBlock Text="{Binding CurrentPage}" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Text="of" FontSize="14" Opacity="0.7"/>
+                    <TextBlock Text="{Binding TotalPages}" FontSize="14" FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <Button Grid.Column="2"
+                       Command="{Binding GoToNextPageCommand}"
+                       CornerRadius="8"
+                       Padding="12,8">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="Next" VerticalAlignment="Center"/>
+                        <materialIcons:MaterialIcon Kind="ChevronRight" Width="20" Height="20"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

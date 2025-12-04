@@ -11,6 +11,22 @@ public partial class DailyMealPlan : ObservableObject
     [ObservableProperty]
     private string _name = "";
 
+    // Properties for shared meal plans (Discover feature)
+    [ObservableProperty]
+    private string? _authorId;
+
+    [ObservableProperty]
+    private string? _authorEmail;
+
+    [ObservableProperty]
+    private int _likesCount;
+
+    [ObservableProperty]
+    private bool _isLikedByCurrentUser;
+
+    // Shared meal plan ID (for tracking in Supabase)
+    public long? SharedMealPlanId { get; set; }
+
     public ObservableCollection<MealTime> MealTimes { get; set; }
 
     public IEnumerable<string> MealTimeNames => MealTimes.Select((x) => x.Name);
