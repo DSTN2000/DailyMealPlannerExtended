@@ -177,20 +177,33 @@ public partial class DiscoverViewModel : ViewModelBase
             bool success;
             if (mealPlan.IsLikedByCurrentUser)
             {
+                // Unlike: remove from Supabase likes and from local favorites
                 success = await _discoverService.UnlikeMealPlanAsync(mealPlan.SharedMealPlanId.Value);
                 if (success)
                 {
                     mealPlan.IsLikedByCurrentUser = false;
                     mealPlan.LikesCount--;
+
+                    // Remove from favorites
+                    _favoritesService.RemoveFromFavorites(mealPlan);
+                    Logger.Instance.Information("Unliked and removed from favorites: {Name}", mealPlan.Name);
+                    StatusMessage = $"Unliked '{mealPlan.Name}'";
                 }
             }
             else
             {
+                // Like: add to Supabase likes and add to local favorites
                 success = await _discoverService.LikeMealPlanAsync(mealPlan.SharedMealPlanId.Value);
                 if (success)
                 {
                     mealPlan.IsLikedByCurrentUser = true;
                     mealPlan.LikesCount++;
+
+                    // Add to favorites (create a copy without shared metadata)
+                    var favoriteMealPlan = CreateFavoriteCopy(mealPlan);
+                    _favoritesService.AddToFavorites(favoriteMealPlan);
+                    Logger.Instance.Information("Liked and added to favorites: {Name}", mealPlan.Name);
+                    StatusMessage = $"Liked '{mealPlan.Name}' and added to favorites";
                 }
             }
 
@@ -204,49 +217,38 @@ public partial class DiscoverViewModel : ViewModelBase
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to toggle like");
+            StatusMessage = "Failed to toggle like";
         }
     }
 
-    [RelayCommand]
-    private void AddToFavorites(DailyMealPlan mealPlan)
+    private DailyMealPlan CreateFavoriteCopy(DailyMealPlan mealPlan)
     {
-        try
+        var favoriteMealPlan = new DailyMealPlan
         {
-            // Create a copy without shared meal plan metadata
-            var favoriteMealPlan = new DailyMealPlan
+            Date = DateTime.Today,
+            Name = mealPlan.Name
+        };
+
+        favoriteMealPlan.MealTimes.Clear();
+
+        foreach (var mealTime in mealPlan.MealTimes)
+        {
+            var newMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
+
+            foreach (var item in mealTime.Items)
             {
-                Date = DateTime.Today,
-                Name = mealPlan.Name
-            };
-
-            favoriteMealPlan.MealTimes.Clear();
-
-            foreach (var mealTime in mealPlan.MealTimes)
-            {
-                var newMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
-
-                foreach (var item in mealTime.Items)
+                var newItem = new MealPlanItem(item.Product, item.Weight)
                 {
-                    var newItem = new MealPlanItem(item.Product, item.Weight)
-                    {
-                        Image = item.Image,
-                        Note = item.Note
-                    };
-                    newMealTime.Items.Add(newItem);
-                }
-
-                favoriteMealPlan.MealTimes.Add(newMealTime);
+                    Image = item.Image,
+                    Note = item.Note
+                };
+                newMealTime.Items.Add(newItem);
             }
 
-            _favoritesService.AddToFavorites(favoriteMealPlan);
-            Logger.Instance.Information("Added shared meal plan to favorites: {Name}", mealPlan.Name);
-            StatusMessage = $"Added '{mealPlan.Name}' to favorites";
+            favoriteMealPlan.MealTimes.Add(newMealTime);
         }
-        catch (Exception ex)
-        {
-            Logger.Instance.Error(ex, "Failed to add to favorites");
-            StatusMessage = "Failed to add to favorites";
-        }
+
+        return favoriteMealPlan;
     }
 
     [RelayCommand]

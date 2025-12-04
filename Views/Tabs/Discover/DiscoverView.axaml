@@ -171,7 +171,8 @@
                                                    CommandParameter="{Binding}"
                                                    CornerRadius="8"
                                                    Padding="8,6"
-                                                   IsVisible="{Binding IsLikedByCurrentUser}">
+                                                   IsVisible="{Binding IsLikedByCurrentUser}"
+                                                   ToolTip.Tip="Unlike and remove from favorites">
                                                 <materialIcons:MaterialIcon Kind="Heart" Width="20" Height="20"/>
                                                 <Button.Styles>
                                                     <Style Selector="Button">
@@ -185,22 +186,14 @@
                                                    CommandParameter="{Binding}"
                                                    CornerRadius="8"
                                                    Padding="8,6"
-                                                   IsVisible="{Binding !IsLikedByCurrentUser}">
+                                                   IsVisible="{Binding !IsLikedByCurrentUser}"
+                                                   ToolTip.Tip="Like and add to favorites">
                                                 <materialIcons:MaterialIcon Kind="HeartOutline" Width="20" Height="20"/>
                                                 <Button.Styles>
                                                     <Style Selector="Button">
                                                         <Setter Property="Background" Value="Transparent"/>
                                                     </Style>
                                                 </Button.Styles>
-                                            </Button>
-
-                                            <!-- Add to Favorites Button -->
-                                            <Button Command="{Binding $parent[UserControl].((vm:DiscoverViewModel)DataContext).AddToFavoritesCommand}"
-                                                   CommandParameter="{Binding}"
-                                                   CornerRadius="8"
-                                                   Padding="8,6"
-                                                   ToolTip.Tip="Add to Favorites">
-                                                <materialIcons:MaterialIcon Kind="Star" Width="20" Height="20"/>
                                             </Button>
 
                                             <!-- Load Button -->

@@ -11,6 +11,7 @@ public partial class MealPlanViewModel : ViewModelBase
     private readonly MealPlanService _mealPlanService;
     private readonly FavoriteMealPlansService _favoritesService;
     private readonly UserPreferencesService _preferencesService;
+    private readonly SupabaseDiscoverService? _discoverService;
 
     [ObservableProperty]
     private DateTime _selectedDate = DateTime.Today;
@@ -27,7 +28,10 @@ public partial class MealPlanViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isReadOnly;
 
-    public MealPlanViewModel()
+    [ObservableProperty]
+    private bool _isAuthenticated;
+
+    public MealPlanViewModel(SupabaseAuthService? authService = null)
     {
         _snapshotService = new();
         _mealPlanService = new();
@@ -35,6 +39,13 @@ public partial class MealPlanViewModel : ViewModelBase
         _preferencesService = new();
         _user = _preferencesService.LoadPreferences() ?? new();
         _currentMealPlan = GetOrCreateMealPlan(SelectedDate);
+
+        // Set up discover service if authenticated
+        IsAuthenticated = authService?.IsAuthenticated ?? false;
+        if (authService != null && IsAuthenticated)
+        {
+            _discoverService = new SupabaseDiscoverService(authService);
+        }
 
         // Subscribe to property changes for progress updates
         SubscribeToPropertyChanges();
@@ -415,6 +426,33 @@ public partial class MealPlanViewModel : ViewModelBase
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to toggle favorite");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ShareMealPlanAsync()
+    {
+        if (_discoverService == null || !IsAuthenticated)
+        {
+            Logger.Instance.Warning("Cannot share meal plan: not authenticated");
+            return;
+        }
+
+        try
+        {
+            var success = await _discoverService.ShareMealPlanAsync(CurrentMealPlan);
+            if (success)
+            {
+                Logger.Instance.Information("Successfully shared meal plan: {Name}", CurrentMealPlan.Name);
+            }
+            else
+            {
+                Logger.Instance.Warning("Failed to share meal plan: {Name}", CurrentMealPlan.Name);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to share meal plan");
         }
     }
 

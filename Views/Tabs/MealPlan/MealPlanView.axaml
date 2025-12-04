@@ -45,7 +45,8 @@
                                VerticalAlignment="Center"
                                Background="Transparent"
                                BorderThickness="0"
-                               IsVisible="{Binding !IsReadOnly}">
+                               IsVisible="{Binding !IsReadOnly}"
+                               ToolTip.Tip="Add to Favorites">
                             <Panel>
                                 <materialIcons:MaterialIcon Kind="HeartOutline"
                                                            Width="24"
@@ -58,6 +59,21 @@
                                                            Foreground="#E91E63"
                                                            IsVisible="{Binding IsFavorite}"/>
                             </Panel>
+                        </Button>
+
+                        <Button Command="{Binding ShareMealPlanCommand}"
+                               CornerRadius="8"
+                               Padding="8"
+                               Margin="4,0,0,0"
+                               VerticalAlignment="Center"
+                               Background="Transparent"
+                               BorderThickness="0"
+                               ToolTip.Tip="Share to Discover"
+                               IsVisible="{Binding IsAuthenticated}">
+                            <materialIcons:MaterialIcon Kind="Share"
+                                                       Width="24"
+                                                       Height="24"
+                                                       Foreground="{DynamicResource MaterialBodyBrush}"/>
                         </Button>
                     </StackPanel>
 

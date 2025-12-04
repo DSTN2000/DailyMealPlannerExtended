@@ -37,7 +37,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         // Create shared instances that need to communicate
-        MealPlanViewModel = new MealPlanViewModel();
+        MealPlanViewModel = new MealPlanViewModel(authService);
 
         // Create UserPreferencesViewModel with reference to MealPlanViewModel, AuthService, and SyncService
         UserPreferencesViewModel = new UserPreferencesViewModel(MealPlanViewModel, AuthService, SyncService);
