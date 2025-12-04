@@ -174,45 +174,45 @@ public partial class DiscoverViewModel : ViewModelBase
 
         try
         {
-            bool success;
             if (mealPlan.IsLikedByCurrentUser)
             {
                 // Unlike: remove from Supabase likes and from local favorites
-                success = await _discoverService.UnlikeMealPlanAsync(mealPlan.SharedMealPlanId.Value);
+                var (success, likesCount) = await _discoverService.UnlikeMealPlanAsync(mealPlan.SharedMealPlanId.Value);
                 if (success)
                 {
                     mealPlan.IsLikedByCurrentUser = false;
-                    mealPlan.LikesCount--;
+                    mealPlan.LikesCount = likesCount; // Use the actual count from database
 
                     // Remove from favorites (use clean copy to match the hash)
                     var favoriteCopy = CreateFavoriteCopy(mealPlan);
                     _favoritesService.RemoveFromFavorites(favoriteCopy);
-                    Logger.Instance.Information("Unliked and removed from favorites: {Name}", mealPlan.Name);
+                    Logger.Instance.Information("Unliked and removed from favorites: {Name} (Likes: {Count})", mealPlan.Name, likesCount);
                     StatusMessage = $"Unliked '{mealPlan.Name}'";
+
+                    // Re-sort the list by likes count
+                    _allMealPlans = _allMealPlans.OrderByDescending(m => m.LikesCount).ToList();
+                    UpdateCurrentPage();
                 }
             }
             else
             {
                 // Like: add to Supabase likes and add to local favorites
-                success = await _discoverService.LikeMealPlanAsync(mealPlan.SharedMealPlanId.Value);
+                var (success, likesCount) = await _discoverService.LikeMealPlanAsync(mealPlan.SharedMealPlanId.Value);
                 if (success)
                 {
                     mealPlan.IsLikedByCurrentUser = true;
-                    mealPlan.LikesCount++;
+                    mealPlan.LikesCount = likesCount; // Use the actual count from database
 
                     // Add to favorites (create a copy without shared metadata)
                     var favoriteMealPlan = CreateFavoriteCopy(mealPlan);
                     _favoritesService.AddToFavorites(favoriteMealPlan);
-                    Logger.Instance.Information("Liked and added to favorites: {Name}", mealPlan.Name);
+                    Logger.Instance.Information("Liked and added to favorites: {Name} (Likes: {Count})", mealPlan.Name, likesCount);
                     StatusMessage = $"Liked '{mealPlan.Name}' and added to favorites";
-                }
-            }
 
-            if (success)
-            {
-                // Re-sort the list by likes count
-                _allMealPlans = _allMealPlans.OrderByDescending(m => m.LikesCount).ToList();
-                UpdateCurrentPage();
+                    // Re-sort the list by likes count
+                    _allMealPlans = _allMealPlans.OrderByDescending(m => m.LikesCount).ToList();
+                    UpdateCurrentPage();
+                }
             }
         }
         catch (Exception ex)

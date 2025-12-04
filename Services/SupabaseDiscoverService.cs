@@ -108,6 +108,16 @@ public class SupabaseDiscoverService
 
             var mealPlans = new List<DailyMealPlan>();
 
+            // Get ALL likes for all meal plans
+            var allLikes = await client
+                .From<MealPlanLikeRecord>()
+                .Get();
+
+            // Group likes by meal plan ID to get counts
+            var likesCountByMealPlan = allLikes.Models
+                .GroupBy(l => l.MealPlanId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
             // Get user's likes
             var userLikes = await GetUserLikesAsync();
             var likedMealPlanIds = userLikes.Select(l => l.MealPlanId).ToHashSet();
@@ -122,12 +132,16 @@ public class SupabaseDiscoverService
                         mealPlan.SharedMealPlanId = record.Id;
                         mealPlan.AuthorId = record.UserId;
                         mealPlan.AuthorEmail = record.UserEmail;
-                        mealPlan.LikesCount = record.LikesCount;
+                        // Get the actual likes count from the likes table
+                        mealPlan.LikesCount = likesCountByMealPlan.GetValueOrDefault(record.Id, 0);
                         mealPlan.IsLikedByCurrentUser = likedMealPlanIds.Contains(record.Id);
                         mealPlans.Add(mealPlan);
                     }
                 }
             }
+
+            // Sort by actual likes count (since we got fresh data)
+            mealPlans = mealPlans.OrderByDescending(m => m.LikesCount).ThenByDescending(m => m.SharedMealPlanId).ToList();
 
             Logger.Instance.Information("Retrieved {Count} shared meal plans", mealPlans.Count);
             return mealPlans;
@@ -140,14 +154,14 @@ public class SupabaseDiscoverService
     }
 
     /// <summary>
-    /// Likes a shared meal plan
+    /// Likes a shared meal plan and returns the updated likes count
     /// </summary>
-    public async Task<bool> LikeMealPlanAsync(long mealPlanId)
+    public async Task<(bool success, int likesCount)> LikeMealPlanAsync(long mealPlanId)
     {
         if (!_authService.IsAuthenticated)
         {
             Logger.Instance.Warning("Cannot like meal plan: user not authenticated");
-            return false;
+            return (false, 0);
         }
 
         try
@@ -158,7 +172,7 @@ public class SupabaseDiscoverService
             if (string.IsNullOrEmpty(userId))
             {
                 Logger.Instance.Error("User ID is null or empty");
-                return false;
+                return (false, 0);
             }
 
             // Check if already liked
@@ -171,7 +185,8 @@ public class SupabaseDiscoverService
             if (existing.Models.Count > 0)
             {
                 Logger.Instance.Information("Meal plan already liked");
-                return true;
+                var currentCount = await GetLikesCountAsync(mealPlanId);
+                return (true, currentCount);
             }
 
             // Add like
@@ -186,28 +201,28 @@ public class SupabaseDiscoverService
                 .From<MealPlanLikeRecord>()
                 .Insert(newLike);
 
-            // Update likes count
-            await UpdateLikesCountAsync(mealPlanId);
+            // Update likes count and return the new count
+            var updatedCount = await UpdateLikesCountAsync(mealPlanId);
 
-            Logger.Instance.Information("Liked meal plan {MealPlanId}", mealPlanId);
-            return true;
+            Logger.Instance.Information("Liked meal plan {MealPlanId}, new count: {Count}", mealPlanId, updatedCount);
+            return (true, updatedCount);
         }
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to like meal plan");
-            return false;
+            return (false, 0);
         }
     }
 
     /// <summary>
-    /// Unlikes a shared meal plan
+    /// Unlikes a shared meal plan and returns the updated likes count
     /// </summary>
-    public async Task<bool> UnlikeMealPlanAsync(long mealPlanId)
+    public async Task<(bool success, int likesCount)> UnlikeMealPlanAsync(long mealPlanId)
     {
         if (!_authService.IsAuthenticated)
         {
             Logger.Instance.Warning("Cannot unlike meal plan: user not authenticated");
-            return false;
+            return (false, 0);
         }
 
         try
@@ -218,7 +233,7 @@ public class SupabaseDiscoverService
             if (string.IsNullOrEmpty(userId))
             {
                 Logger.Instance.Error("User ID is null or empty");
-                return false;
+                return (false, 0);
             }
 
             // Get the like record
@@ -231,23 +246,24 @@ public class SupabaseDiscoverService
             if (existing.Models.Count == 0)
             {
                 Logger.Instance.Information("Meal plan not liked");
-                return true;
+                var currentCount = await GetLikesCountAsync(mealPlanId);
+                return (true, currentCount);
             }
 
             // Delete like using the model directly
             var likeToDelete = existing.Models[0];
             await likeToDelete.Delete<MealPlanLikeRecord>();
 
-            // Update likes count
-            await UpdateLikesCountAsync(mealPlanId);
+            // Update likes count and return the new count
+            var updatedCount = await UpdateLikesCountAsync(mealPlanId);
 
-            Logger.Instance.Information("Unliked meal plan {MealPlanId}", mealPlanId);
-            return true;
+            Logger.Instance.Information("Unliked meal plan {MealPlanId}, new count: {Count}", mealPlanId, updatedCount);
+            return (true, updatedCount);
         }
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to unlike meal plan");
-            return false;
+            return (false, 0);
         }
     }
 
@@ -281,9 +297,9 @@ public class SupabaseDiscoverService
     }
 
     /// <summary>
-    /// Updates the likes count for a meal plan
+    /// Gets the current likes count for a meal plan from the database
     /// </summary>
-    private async Task UpdateLikesCountAsync(long mealPlanId)
+    private async Task<int> GetLikesCountAsync(long mealPlanId)
     {
         try
         {
@@ -295,7 +311,26 @@ public class SupabaseDiscoverService
                 .Where(x => x.MealPlanId == mealPlanId)
                 .Get();
 
-            var likesCount = likes.Models.Count;
+            return likes.Models.Count;
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to get likes count");
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Updates the likes count for a meal plan and returns the new count
+    /// </summary>
+    private async Task<int> UpdateLikesCountAsync(long mealPlanId)
+    {
+        try
+        {
+            var client = _authService.GetClient();
+
+            // Count likes
+            var likesCount = await GetLikesCountAsync(mealPlanId);
 
             // Get the meal plan
             var mealPlan = await client
@@ -312,10 +347,13 @@ public class SupabaseDiscoverService
                     .From<SharedMealPlanRecord>()
                     .Update(mealPlan);
             }
+
+            return likesCount;
         }
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to update likes count");
+            return 0;
         }
     }
 
