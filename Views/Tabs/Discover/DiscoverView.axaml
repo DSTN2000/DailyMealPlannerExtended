@@ -173,7 +173,7 @@
                                                    Padding="8,6"
                                                    IsVisible="{Binding IsLikedByCurrentUser}"
                                                    ToolTip.Tip="Unlike and remove from favorites">
-                                                <materialIcons:MaterialIcon Kind="Heart" Width="20" Height="20"/>
+                                                <materialIcons:MaterialIcon Kind="Heart" Width="20" Height="20" Foreground="#E91E63"/>
                                                 <Button.Styles>
                                                     <Style Selector="Button">
                                                         <Setter Property="Background" Value="Transparent"/>
@@ -188,7 +188,7 @@
                                                    Padding="8,6"
                                                    IsVisible="{Binding !IsLikedByCurrentUser}"
                                                    ToolTip.Tip="Like and add to favorites">
-                                                <materialIcons:MaterialIcon Kind="HeartOutline" Width="20" Height="20"/>
+                                                <materialIcons:MaterialIcon Kind="HeartOutline" Foreground="{DynamicResource MaterialBodyBrush}" Width="20" Height="20"/>
                                                 <Button.Styles>
                                                     <Style Selector="Button">
                                                         <Setter Property="Background" Value="Transparent"/>

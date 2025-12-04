@@ -234,11 +234,9 @@ public class SupabaseDiscoverService
                 return true;
             }
 
-            // Delete like
-            await client
-                .From<MealPlanLikeRecord>()
-                .Where(x => x.Id == existing.Models[0].Id)
-                .Delete();
+            // Delete like using the model directly
+            var likeToDelete = existing.Models[0];
+            await likeToDelete.Delete<MealPlanLikeRecord>();
 
             // Update likes count
             await UpdateLikesCountAsync(mealPlanId);

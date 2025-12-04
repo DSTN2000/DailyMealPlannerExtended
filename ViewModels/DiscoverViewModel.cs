@@ -184,8 +184,9 @@ public partial class DiscoverViewModel : ViewModelBase
                     mealPlan.IsLikedByCurrentUser = false;
                     mealPlan.LikesCount--;
 
-                    // Remove from favorites
-                    _favoritesService.RemoveFromFavorites(mealPlan);
+                    // Remove from favorites (use clean copy to match the hash)
+                    var favoriteCopy = CreateFavoriteCopy(mealPlan);
+                    _favoritesService.RemoveFromFavorites(favoriteCopy);
                     Logger.Instance.Information("Unliked and removed from favorites: {Name}", mealPlan.Name);
                     StatusMessage = $"Unliked '{mealPlan.Name}'";
                 }
