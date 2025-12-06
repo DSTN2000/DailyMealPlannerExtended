@@ -28,14 +28,31 @@
 
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header with Close Button -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,16">
                     <TextBlock Grid.Column="0"
                               Text="{Binding Product.Name}"
                               FontSize="24"
                               FontWeight="Bold"
                               TextWrapping="Wrap"/>
 
+                    <!-- AI Generate Image Button (only in EditMealItem mode) -->
                     <Button Grid.Column="1"
+                           Command="{Binding GenerateAIImageCommand}"
+                           CornerRadius="12"
+                           Padding="8"
+                           Margin="0,0,8,0"
+                           ToolTip.Tip="Generate AI Image"
+                           IsVisible="{Binding CanGenerateImage}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <materialIcons:MaterialIcon Kind="Creation" Width="24" Height="24"/>
+                            <ProgressBar IsIndeterminate="True"
+                                        Width="24"
+                                        Height="24"
+                                        IsVisible="{Binding IsGeneratingImage}"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Grid.Column="2"
                            Command="{Binding CloseCommand}"
                            CornerRadius="12"
                            Padding="8">

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DailyMealPlannerExtended.Models;
+using DailyMealPlannerExtended.Services;
 
 namespace DailyMealPlannerExtended.ViewModels;
 
@@ -14,6 +15,7 @@ public enum ProductDetailMode
 public partial class ProductDetailViewModel : ViewModelBase
 {
     private readonly MealPlanViewModel? _mealPlanViewModel;
+    private readonly CloudflareAIService _aiService;
 
     [ObservableProperty]
     private Product? _product;
@@ -26,6 +28,11 @@ public partial class ProductDetailViewModel : ViewModelBase
 
     [ObservableProperty]
     private ProductDetailMode _mode = ProductDetailMode.Catalog;
+
+    [ObservableProperty]
+    private bool _isGeneratingImage;
+
+    public bool CanGenerateImage => Mode == ProductDetailMode.EditMealItem && !IsGeneratingImage && _aiService.IsConfigured();
 
     partial void OnMealPlanItemChanged(MealPlanItem? oldValue, MealPlanItem? newValue)
     {
@@ -74,9 +81,10 @@ public partial class ProductDetailViewModel : ViewModelBase
 
     public ProductDetailViewModel()
     {
+        _aiService = new CloudflareAIService();
     }
 
-    public ProductDetailViewModel(MealPlanViewModel mealPlanViewModel)
+    public ProductDetailViewModel(MealPlanViewModel mealPlanViewModel) : this()
     {
         _mealPlanViewModel = mealPlanViewModel;
 
@@ -179,6 +187,68 @@ public partial class ProductDetailViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task GenerateAIImageAsync()
+    {
+        if (MealPlanItem == null || Product == null)
+        {
+            Logger.Instance.Warning("Cannot generate AI image: no meal plan item or product");
+            return;
+        }
+
+        if (!_aiService.IsConfigured())
+        {
+            Logger.Instance.Warning("Cloudflare AI service not configured");
+            return;
+        }
+
+        try
+        {
+            IsGeneratingImage = true;
+            OnPropertyChanged(nameof(CanGenerateImage));
+
+            Logger.Instance.Information("Generating AI image for: {Product}", Product.Name);
+
+            // Generate the image
+            var alternateNames = Product.AltNames != null && Product.AltNames.Count > 0
+                ? string.Join(", ", Product.AltNames)
+                : null;
+
+            var bitmap = await _aiService.GenerateProductImageAsync(
+                Product.Name,
+                alternateNames,
+                Product.Description
+            );
+
+            if (bitmap != null)
+            {
+                // Convert bitmap to base64
+                await using var stream = new System.IO.MemoryStream();
+                bitmap.Save(stream);
+                var imageBytes = stream.ToArray();
+
+                // Resize to max height of 180px for consistency with photo uploads
+                var resizedImageBytes = await ResizeImageAsync(imageBytes, maxHeight: 180);
+                MealPlanItem.Image = Convert.ToBase64String(resizedImageBytes);
+
+                Logger.Instance.Information("AI image generated and added to meal plan item");
+            }
+            else
+            {
+                Logger.Instance.Warning("AI image generation returned null");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to generate AI image");
+        }
+        finally
+        {
+            IsGeneratingImage = false;
+            OnPropertyChanged(nameof(CanGenerateImage));
+        }
+    }
+
+    [RelayCommand]
     private void Close()
     {
         IsVisible = false;
@@ -234,6 +304,7 @@ public partial class ProductDetailViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowNoteReadOnly));
         OnPropertyChanged(nameof(CurrentWeight));
         OnPropertyChanged(nameof(CurrentServings));
+        OnPropertyChanged(nameof(CanGenerateImage));
     }
 
     private async Task<byte[]> ResizeImageAsync(byte[] imageBytes, int maxHeight)

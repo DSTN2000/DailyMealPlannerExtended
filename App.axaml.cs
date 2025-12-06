@@ -29,6 +29,9 @@ public partial class App : Application
         // Load Supabase configuration
         SupabaseConfig.Load();
 
+        // Load Cloudflare configuration
+        CloudflareConfig.Load();
+
         AvaloniaXamlLoader.Load(this);
     }
 

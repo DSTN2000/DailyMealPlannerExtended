@@ -46,3 +46,36 @@ public static class SupabaseConfig
         return !string.IsNullOrEmpty(Url) && !string.IsNullOrEmpty(PublishableKey);
     }
 }
+
+public static class CloudflareConfig
+{
+    public static string WorkersAIToken { get; private set; } = string.Empty;
+    public static string AccountId { get; private set; } = string.Empty;
+
+    public static void Load()
+    {
+        try
+        {
+            WorkersAIToken = Environment.GetEnvironmentVariable("CLOUDFLARE_WORKERS_AI_TOKEN") ?? string.Empty;
+            AccountId = Environment.GetEnvironmentVariable("CLOUDFLARE_ACCOUNT_ID") ?? string.Empty;
+
+            if (string.IsNullOrEmpty(WorkersAIToken))
+            {
+                Logger.Instance.Warning("Cloudflare Workers AI token not found in .env file");
+            }
+            else
+            {
+                Logger.Instance.Information("Cloudflare Workers AI configuration loaded successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to load Cloudflare configuration");
+        }
+    }
+
+    public static bool IsConfigured()
+    {
+        return !string.IsNullOrEmpty(WorkersAIToken) && !string.IsNullOrEmpty(AccountId);
+    }
+}
