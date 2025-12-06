@@ -33,9 +33,10 @@ public partial class FavoritesViewModel : ViewModelBase
         LoadFavorites();
     }
 
-    public FavoritesViewModel(MealPlanViewModel mealPlanViewModel) : this()
+    public FavoritesViewModel(MealPlanViewModel mealPlanViewModel, AutoSyncService? autoSyncService = null) : this()
     {
         _mealPlanViewModel = mealPlanViewModel;
+        // AutoSyncService stored for potential future use (e.g., syncing favorites)
 
         // Subscribe to MealPlanViewModel's IsReadOnly changes
         if (_mealPlanViewModel != null)

@@ -15,6 +15,7 @@ public partial class App : Application
 {
     private static MainWindowViewModel? _mainWindowViewModel;
     private static SupabaseAuthService? _authService;
+    private static NetworkConnectivityService? _connectivityService;
 
     public static MainWindowViewModel GetMainWindowViewModel()
     {
@@ -25,6 +26,9 @@ public partial class App : Application
     {
         // Initialize logger early
         _ = Logger.Instance;
+
+        // Initialize connectivity service
+        _connectivityService = new NetworkConnectivityService();
 
         // Load Supabase configuration
         SupabaseConfig.Load();
@@ -46,19 +50,28 @@ public partial class App : Application
             // Check if Supabase is configured
             if (SupabaseConfig.IsConfigured())
             {
-                // Initialize auth service and check if user is already logged in
-                _authService = new SupabaseAuthService();
-                await _authService.InitializeAsync();
+                try
+                {
+                    // Initialize auth service and check if user is already logged in
+                    _authService = new SupabaseAuthService(_connectivityService!);
+                    await _authService.InitializeAsync();
 
-                if (!_authService.IsAuthenticated)
-                {
-                    // Show login screen
-                    ShowLoginScreen(desktop);
+                    if (!_authService.IsAuthenticated)
+                    {
+                        // Show login screen
+                        ShowLoginScreen(desktop);
+                    }
+                    else
+                    {
+                        // User is already authenticated, show main window
+                        ShowMainWindow(desktop);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    // User is already authenticated, show main window
-                    ShowMainWindow(desktop);
+                    Logger.Instance.Error(ex, "Failed to initialize auth service");
+                    // Show login screen on error
+                    ShowLoginScreen(desktop);
                 }
             }
             else
@@ -75,14 +88,13 @@ public partial class App : Application
     private void ShowLoginScreen(IClassicDesktopStyleApplicationLifetime desktop)
     {
         // Initialize new auth service for fresh login
-        _authService = new SupabaseAuthService();
+        _authService = new SupabaseAuthService(_connectivityService!);
 
-        var loginViewModel = new LoginViewModel();
+        var loginViewModel = new LoginViewModel(_authService, _connectivityService!);
 
         loginViewModel.LoginSuccessful += (s, e) =>
         {
             // Login successful, show main window
-            _authService = loginViewModel.GetAuthService();
             ShowMainWindow(desktop);
         };
 
@@ -118,7 +130,7 @@ public partial class App : Application
 
     private void ShowMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
     {
-        _mainWindowViewModel = new MainWindowViewModel(_authService);
+        _mainWindowViewModel = new MainWindowViewModel(_authService, _connectivityService);
 
         // Subscribe to logout event
         _mainWindowViewModel.UserLoggedOut += (s, e) =>

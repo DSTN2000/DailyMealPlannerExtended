@@ -19,10 +19,11 @@ public partial class HistoryViewModel : ViewModelBase
 
     public DateTime Today => DateTime.Today;
 
-    public HistoryViewModel(MealPlanViewModel mealPlanViewModel)
+    public HistoryViewModel(MealPlanViewModel mealPlanViewModel, AutoSyncService? autoSyncService = null)
     {
         _snapshotService = new DaySnapshotService();
         _mealPlanViewModel = mealPlanViewModel;
+        // AutoSyncService stored for potential future use (e.g., syncing snapshots)
         LoadAvailableDates();
     }
 

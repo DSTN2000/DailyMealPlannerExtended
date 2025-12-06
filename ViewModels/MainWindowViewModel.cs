@@ -15,21 +15,26 @@ public partial class MainWindowViewModel : ViewModelBase
     public UserPreferencesViewModel UserPreferencesViewModel { get; }
 
     public SupabaseAuthService? AuthService { get; }
-    public SupabaseSyncService? SyncService { get; }
+    public AutoSyncService? AutoSyncService { get; }
+    public NetworkConnectivityService? ConnectivityService { get; }
     public bool IsAuthenticated => AuthService?.IsAuthenticated ?? false;
     public string? UserEmail => AuthService?.CurrentUser?.Email;
 
     public event EventHandler? UserLoggedOut;
 
-    public MainWindowViewModel(SupabaseAuthService? authService = null)
+    public MainWindowViewModel(
+        SupabaseAuthService? authService = null,
+        NetworkConnectivityService? connectivityService = null)
     {
         AuthService = authService;
+        ConnectivityService = connectivityService;
 
-        // Create sync service if authenticated
-        if (authService?.IsAuthenticated == true)
+        // Create auto-sync service if authenticated
+        if (authService != null && connectivityService != null)
         {
-            SyncService = new SupabaseSyncService(
+            AutoSyncService = new AutoSyncService(
                 authService,
+                connectivityService,
                 new UserPreferencesService(),
                 new DaySnapshotService(),
                 new FavoriteMealPlansService()
@@ -37,17 +42,21 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         // Create shared instances that need to communicate
-        MealPlanViewModel = new MealPlanViewModel(authService);
+        MealPlanViewModel = new MealPlanViewModel(authService, AutoSyncService);
 
-        // Create UserPreferencesViewModel with reference to MealPlanViewModel, AuthService, and SyncService
-        UserPreferencesViewModel = new UserPreferencesViewModel(MealPlanViewModel, AuthService, SyncService);
+        // Create UserPreferencesViewModel with reference to services
+        UserPreferencesViewModel = new UserPreferencesViewModel(
+            MealPlanViewModel,
+            AuthService,
+            AutoSyncService,
+            ConnectivityService);
 
         // Create ProductDetailViewModel with reference to MealPlanViewModel for read-only state
         ProductDetailViewModel = new ProductDetailViewModel(MealPlanViewModel);
 
-        FavoritesViewModel = new FavoritesViewModel(MealPlanViewModel);
+        FavoritesViewModel = new FavoritesViewModel(MealPlanViewModel, AutoSyncService);
         DiscoverViewModel = new DiscoverViewModel(MealPlanViewModel, AuthService);
-        HistoryViewModel = new HistoryViewModel(MealPlanViewModel);
+        HistoryViewModel = new HistoryViewModel(MealPlanViewModel, AutoSyncService);
         AddToMealPlanViewModel = new AddToMealPlanViewModel(MealPlanViewModel);
 
         // Subscribe to logout event
@@ -62,12 +71,12 @@ public partial class MainWindowViewModel : ViewModelBase
             Logger.Instance.Information("Main window initialized with authenticated user: {Email}", UserEmail);
 
             // Trigger initial sync in background
-            if (SyncService != null)
+            if (AutoSyncService != null)
             {
                 _ = Task.Run(async () =>
                 {
                     await Task.Delay(1000); // Short delay to let UI load first
-                    await SyncService.SyncAllAsync();
+                    await AutoSyncService.InitialSyncAsync();
                 });
             }
         }

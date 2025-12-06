@@ -8,12 +8,28 @@ public class SupabaseAuthService
 {
     private Supabase.Client? _client;
     private LocalHttpServer? _httpServer;
+    private readonly NetworkConnectivityService _connectivityService;
 
     public bool IsAuthenticated => _client?.Auth.CurrentSession != null;
     public Session? CurrentSession => _client?.Auth.CurrentSession;
     public User? CurrentUser => _client?.Auth.CurrentUser;
+    public ConnectionStatus ConnectionStatus => _connectivityService.Status;
+    public bool IsOnline => _connectivityService.IsOnline;
 
     public event EventHandler<bool>? AuthStateChanged;
+    public event EventHandler<ConnectionStatus>? ConnectionStatusChanged;
+
+    public SupabaseAuthService(NetworkConnectivityService connectivityService)
+    {
+        _connectivityService = connectivityService;
+        _connectivityService.ConnectionStatusChanged += OnConnectionStatusChanged;
+    }
+
+    private void OnConnectionStatusChanged(object? sender, ConnectionStatus status)
+    {
+        Logger.Instance.Information("Connection status changed: {Status}", status);
+        ConnectionStatusChanged?.Invoke(this, status);
+    }
 
     public async Task<Supabase.Client> InitializeAsync()
     {
@@ -34,15 +50,24 @@ public class SupabaseAuthService
             };
 
             _client = new Supabase.Client(SupabaseConfig.Url, SupabaseConfig.PublishableKey, options);
-            await _client.InitializeAsync();
 
-            // Subscribe to auth state changes
-            _client.Auth.AddStateChangedListener(OnAuthStateChanged);
+            // Only initialize if online
+            if (_connectivityService.IsOnline)
+            {
+                await _client.InitializeAsync();
+                Logger.Instance.Information("Supabase client initialized successfully (online)");
 
-            Logger.Instance.Information("Supabase client initialized successfully");
+                // Subscribe to auth state changes
+                _client.Auth.AddStateChangedListener(OnAuthStateChanged);
 
-            // Try to restore session from storage
-            await TryRestoreSessionAsync();
+                // Try to restore session from storage
+                await TryRestoreSessionAsync();
+            }
+            else
+            {
+                Logger.Instance.Warning("Initializing Supabase client in offline mode");
+                // Client is created but not initialized - will be initialized when connection is restored
+            }
 
             return _client;
         }
@@ -101,6 +126,14 @@ public class SupabaseAuthService
                 if (session != null)
                 {
                     await SaveSessionAsync(session);
+
+                    // Store user ID for account validation
+                    if (CurrentUser?.Id != null)
+                    {
+                        await StoreUserIdAsync(CurrentUser.Id);
+                    }
+
+                    _connectivityService.UpdateAuthenticatedStatus(true);
                     Logger.Instance.Information("Successfully signed in with Google: {Email}", CurrentUser?.Email);
                     return true;
                 }
@@ -155,20 +188,170 @@ public class SupabaseAuthService
         }
     }
 
-    public async Task SignOutAsync()
+    public async Task SignOutAsync(bool clearLocalData = true)
     {
         try
         {
-            if (_client != null)
+            if (_client != null && _connectivityService.IsOnline)
             {
                 await _client.Auth.SignOut();
-                await ClearSessionAsync();
-                Logger.Instance.Information("Signed out successfully");
             }
+
+            await ClearSessionAsync();
+
+            if (clearLocalData)
+            {
+                await ClearAllLocalDataAsync();
+            }
+
+            _connectivityService.UpdateAuthenticatedStatus(false);
+            Logger.Instance.Information("Signed out successfully (clearLocalData: {ClearData})", clearLocalData);
         }
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to sign out");
+            throw;
+        }
+    }
+
+    public async Task ClearAllLocalDataAsync()
+    {
+        try
+        {
+            var dataFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DailyMealPlanner",
+                "DailyMealPlannerExtended"
+            );
+
+            if (!Directory.Exists(dataFolder))
+            {
+                Logger.Instance.Information("Data folder does not exist, nothing to clear");
+                return;
+            }
+
+            // Clear user preferences
+            var preferencesFile = Path.Combine(dataFolder, "user_preferences.json");
+            if (File.Exists(preferencesFile))
+            {
+                File.Delete(preferencesFile);
+                Logger.Instance.Information("Cleared user preferences");
+            }
+
+            // Clear SQLite databases - need to clear connection pools first
+            var snapshotsDb = Path.Combine(dataFolder, "snapshots.db");
+            var favoritesDb = Path.Combine(dataFolder, "favorites.db");
+
+            // Clear SQLite connection pools to release file locks
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+
+            // Small delay to ensure connections are fully released
+            await Task.Delay(100);
+
+            // Clear snapshots database
+            if (File.Exists(snapshotsDb))
+            {
+                try
+                {
+                    File.Delete(snapshotsDb);
+                    Logger.Instance.Information("Cleared snapshots database");
+                }
+                catch (IOException ex)
+                {
+                    Logger.Instance.Warning(ex, "Could not delete snapshots.db (file in use), will retry");
+                    // Force garbage collection to release any remaining connections
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    await Task.Delay(200);
+                    File.Delete(snapshotsDb);
+                    Logger.Instance.Information("Cleared snapshots database on retry");
+                }
+            }
+
+            // Clear favorites database
+            if (File.Exists(favoritesDb))
+            {
+                try
+                {
+                    File.Delete(favoritesDb);
+                    Logger.Instance.Information("Cleared favorites database");
+                }
+                catch (IOException ex)
+                {
+                    Logger.Instance.Warning(ex, "Could not delete favorites.db (file in use), will retry");
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    await Task.Delay(200);
+                    File.Delete(favoritesDb);
+                    Logger.Instance.Information("Cleared favorites database on retry");
+                }
+            }
+
+            // Clear stored user ID
+            var userIdFile = Path.Combine(dataFolder, "current_user_id.txt");
+            if (File.Exists(userIdFile))
+            {
+                File.Delete(userIdFile);
+                Logger.Instance.Information("Cleared stored user ID");
+            }
+
+            Logger.Instance.Information("All local data cleared successfully");
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to clear local data");
+            throw;
+        }
+    }
+
+    public async Task<string?> GetStoredUserIdAsync()
+    {
+        try
+        {
+            var dataFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DailyMealPlanner",
+                "DailyMealPlannerExtended"
+            );
+
+            var userIdFile = Path.Combine(dataFolder, "current_user_id.txt");
+
+            if (File.Exists(userIdFile))
+            {
+                return await File.ReadAllTextAsync(userIdFile);
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to get stored user ID");
+            return null;
+        }
+    }
+
+    public async Task StoreUserIdAsync(string userId)
+    {
+        try
+        {
+            var dataFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DailyMealPlanner",
+                "DailyMealPlannerExtended"
+            );
+
+            if (!Directory.Exists(dataFolder))
+            {
+                Directory.CreateDirectory(dataFolder);
+            }
+
+            var userIdFile = Path.Combine(dataFolder, "current_user_id.txt");
+            await File.WriteAllTextAsync(userIdFile, userId);
+            Logger.Instance.Information("Stored user ID: {UserId}", userId);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to store user ID");
         }
     }
 
@@ -243,6 +426,10 @@ public class SupabaseAuthService
 
                     if (session != null)
                     {
+                        // Validate account matches local data
+                        await ValidateAccountMatchAsync();
+
+                        _connectivityService.UpdateAuthenticatedStatus(true);
                         Logger.Instance.Information("Session restored successfully: {Email}", CurrentUser?.Email);
                         return true;
                     }
@@ -267,6 +454,42 @@ public class SupabaseAuthService
         }
 
         return false;
+    }
+
+    public async Task ValidateAccountMatchAsync()
+    {
+        try
+        {
+            if (!IsAuthenticated || CurrentUser?.Id == null)
+            {
+                return;
+            }
+
+            var storedUserId = await GetStoredUserIdAsync();
+
+            if (storedUserId != null && storedUserId != CurrentUser.Id)
+            {
+                Logger.Instance.Warning(
+                    "Account mismatch detected! Stored: {StoredId}, Current: {CurrentId}. Clearing local data.",
+                    storedUserId, CurrentUser.Id
+                );
+
+                // Account switched without proper logout - clear everything
+                await ClearAllLocalDataAsync();
+                await StoreUserIdAsync(CurrentUser.Id);
+
+                Logger.Instance.Information("Local data cleared due to account mismatch");
+            }
+            else if (storedUserId == null)
+            {
+                // First login or user ID not stored yet
+                await StoreUserIdAsync(CurrentUser.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to validate account match");
+        }
     }
 
     private async Task ClearSessionAsync()

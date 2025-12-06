@@ -7,6 +7,7 @@ namespace DailyMealPlannerExtended.ViewModels;
 public partial class LoginViewModel : ViewModelBase
 {
     private readonly SupabaseAuthService _authService;
+    private readonly NetworkConnectivityService _connectivityService;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -17,9 +18,10 @@ public partial class LoginViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasError;
 
-    public LoginViewModel()
+    public LoginViewModel(SupabaseAuthService authService, NetworkConnectivityService connectivityService)
     {
-        _authService = new SupabaseAuthService();
+        _authService = authService;
+        _connectivityService = connectivityService;
     }
 
     [RelayCommand]

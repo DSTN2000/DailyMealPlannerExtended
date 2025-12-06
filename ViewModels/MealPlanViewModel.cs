@@ -12,6 +12,7 @@ public partial class MealPlanViewModel : ViewModelBase
     private readonly FavoriteMealPlansService _favoritesService;
     private readonly UserPreferencesService _preferencesService;
     private readonly SupabaseDiscoverService? _discoverService;
+    private readonly AutoSyncService? _autoSyncService;
 
     [ObservableProperty]
     private DateTime _selectedDate = DateTime.Today;
@@ -31,12 +32,13 @@ public partial class MealPlanViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isAuthenticated;
 
-    public MealPlanViewModel(SupabaseAuthService? authService = null)
+    public MealPlanViewModel(SupabaseAuthService? authService = null, AutoSyncService? autoSyncService = null)
     {
         _snapshotService = new();
         _mealPlanService = new();
         _favoritesService = new();
         _preferencesService = new();
+        _autoSyncService = autoSyncService;
         _user = _preferencesService.LoadPreferences() ?? new();
         _currentMealPlan = GetOrCreateMealPlan(SelectedDate);
 
