@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
              xmlns:models="using:DailyMealPlannerExtended.Models"
+             xmlns:converters="using:DailyMealPlannerExtended.Converters"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="DailyMealPlannerExtended.Views.MealPlan.MealPlanView"
@@ -12,6 +13,10 @@
              Focusable="True"
              Background="Transparent"
              PointerPressed="MealPlanView_PointerPressed">
+
+    <UserControl.Resources>
+        <converters:Base64ToImageConverter x:Key="Base64ToImageConverter"/>
+    </UserControl.Resources>
 
     <Design.DataContext>
         <vm:MealPlanViewModel/>
@@ -166,7 +171,7 @@
                                                            Margin="0,0,0,8"
                                                            Cursor="Hand"
                                                            Tapped="MealPlanItem_Tapped">
-                                                        <Grid ColumnDefinitions="*,Auto">
+                                                        <Grid ColumnDefinitions="*,Auto,Auto">
                                                             <StackPanel Grid.Column="0" Spacing="4">
                                                                 <TextBlock Text="{Binding Product.Name}"
                                                                           FontSize="14"
@@ -184,7 +189,19 @@
                                                                 </StackPanel>
                                                             </StackPanel>
 
-                                                            <Button Grid.Column="1"
+                                                            <!-- Item Image -->
+                                                            <Border Grid.Column="1"
+                                                                   CornerRadius="6"
+                                                                   Width="48"
+                                                                   Height="48"
+                                                                   Margin="8,0"
+                                                                   ClipToBounds="True"
+                                                                   IsVisible="{Binding Image, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                                <Image Source="{Binding Image, Converter={StaticResource Base64ToImageConverter}}"
+                                                                      Stretch="UniformToFill"/>
+                                                            </Border>
+
+                                                            <Button Grid.Column="2"
                                                                    Command="{Binding $parent[UserControl].((vm:MealPlanViewModel)DataContext).RemoveFoodItemCommand}"
                                                                    CommandParameter="{Binding}"
                                                                    CornerRadius="8"
