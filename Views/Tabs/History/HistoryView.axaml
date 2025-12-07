@@ -35,13 +35,14 @@
                               Opacity="0.7"/>
                 </StackPanel>
 
-                <!-- Calendar -->
-                <ScrollViewer Grid.Row="1">
+                <!-- Calendar wrapped in Viewbox to scale and fill available space -->
+                <Viewbox Grid.Row="1"
+                        Stretch="Uniform"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
                     <Calendar SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
                              DisplayDateEnd="{Binding Today}"
-                             FirstDayOfWeek="Monday"
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Top">
+                             FirstDayOfWeek="Monday">
                         <Calendar.Styles>
                             <!-- Style calendar day buttons to show snapshot progress colors -->
                             <Style Selector="CalendarDayButton">
@@ -54,7 +55,7 @@
                             </Style>
                         </Calendar.Styles>
                     </Calendar>
-                </ScrollViewer>
+                </Viewbox>
             </Grid>
         </Border>
     </Grid>
