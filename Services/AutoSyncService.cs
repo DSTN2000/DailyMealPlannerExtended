@@ -199,7 +199,11 @@ public class AutoSyncService
 
             await DownloadAllDataAsync(client, userId);
 
+            LastSyncTime = DateTime.Now;
             Logger.Instance.Information("Initial sync completed");
+
+            // Fire sync completed event so ViewModels can reload data
+            SyncCompleted?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
@@ -233,9 +237,29 @@ public class AutoSyncService
                 var record = remotePrefs.Models[0];
                 if (!string.IsNullOrEmpty(record.PreferencesJson))
                 {
-                    var prefsData = JsonSerializer.Deserialize<Dictionary<string, object>>(record.PreferencesJson!);
-                    // TODO: Parse and save preferences
-                    Logger.Instance.Information("Downloaded user preferences");
+                    // Parse JSON preferences
+                    using var doc = JsonDocument.Parse(record.PreferencesJson);
+                    var root = doc.RootElement;
+
+                    var user = new User
+                    {
+                        Weight = root.GetProperty("weight").GetDouble(),
+                        Height = root.GetProperty("height").GetDouble(),
+                        Age = root.GetProperty("age").GetInt32(),
+                        ActivityLevel = Enum.Parse<ActivityLevel>(root.GetProperty("activityLevel").GetString()!)
+                    };
+
+                    // Parse nutrients split
+                    var nutrientsSplit = root.GetProperty("nutrientsSplit");
+                    user.NutrientsSplit = (
+                        p: nutrientsSplit.GetProperty("protein").GetDouble(),
+                        f: nutrientsSplit.GetProperty("fat").GetDouble(),
+                        c: nutrientsSplit.GetProperty("carbs").GetDouble()
+                    );
+
+                    // Save preferences locally
+                    _preferencesService.SavePreferences(user);
+                    Logger.Instance.Information("Downloaded and saved user preferences");
                 }
             }
         }
@@ -256,18 +280,44 @@ public class AutoSyncService
 
             foreach (var record in remoteSnapshots.Models)
             {
-                if (!string.IsNullOrEmpty(record.MealPlanXml))
+                if (!string.IsNullOrEmpty(record.MealPlanXml) && !string.IsNullOrEmpty(record.UserPreferencesJson))
                 {
                     var mealPlan = MealPlanService.DeserializeMealPlanFromXml(record.MealPlanXml!);
                     if (mealPlan != null)
                     {
-                        // TODO: Merge with local snapshots based on timestamp
-                        Logger.Instance.Debug("Downloaded snapshot for date: {Date}", record.Date);
+                        // Parse user preferences from JSON
+                        using var doc = JsonDocument.Parse(record.UserPreferencesJson);
+                        var root = doc.RootElement;
+
+                        var userPrefs = new User
+                        {
+                            Weight = root.GetProperty("weight").GetDouble(),
+                            Height = root.GetProperty("height").GetDouble(),
+                            Age = root.GetProperty("age").GetInt32(),
+                            ActivityLevel = Enum.Parse<ActivityLevel>(root.GetProperty("activityLevel").GetString()!)
+                        };
+
+                        var nutrientsSplit = root.GetProperty("nutrientsSplit");
+                        userPrefs.NutrientsSplit = (
+                            p: nutrientsSplit.GetProperty("protein").GetDouble(),
+                            f: nutrientsSplit.GetProperty("fat").GetDouble(),
+                            c: nutrientsSplit.GetProperty("carbs").GetDouble()
+                        );
+
+                        // Create snapshot and save locally
+                        var snapshot = new DaySnapshot
+                        {
+                            MealPlan = mealPlan,
+                            UserPreferences = userPrefs
+                        };
+
+                        _snapshotService.SaveSnapshot(mealPlan, userPrefs);
+                        Logger.Instance.Debug("Downloaded and saved snapshot for date: {Date}", record.Date);
                     }
                 }
             }
 
-            Logger.Instance.Information("Downloaded {Count} snapshots", remoteSnapshots.Models.Count);
+            Logger.Instance.Information("Downloaded and saved {Count} snapshots", remoteSnapshots.Models.Count);
         }
         catch (Exception ex)
         {

@@ -73,6 +73,14 @@ public partial class MainWindowViewModel : ViewModelBase
             // Trigger initial sync in background
             if (AutoSyncService != null)
             {
+                // Subscribe to sync completion to reload preferences
+                AutoSyncService.SyncCompleted += (s, e) =>
+                {
+                    // Reload user preferences after sync completes
+                    MealPlanViewModel.ReloadUserPreferences();
+                    Logger.Instance.Information("Reloaded user preferences after initial sync");
+                };
+
                 _ = Task.Run(async () =>
                 {
                     await Task.Delay(1000); // Short delay to let UI load first

@@ -494,4 +494,25 @@ public partial class MealPlanViewModel : ViewModelBase
             IsFavorite = false;
         }
     }
+
+    /// <summary>
+    /// Reloads user preferences from local storage (called after sync completes)
+    /// </summary>
+    public void ReloadUserPreferences()
+    {
+        try
+        {
+            var updatedUser = _preferencesService.LoadPreferences();
+            if (updatedUser != null)
+            {
+                User = updatedUser;
+                Logger.Instance.Information("Reloaded user preferences: Weight={Weight}kg, Height={Height}cm, Age={Age}",
+                    User.Weight, User.Height, User.Age);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to reload user preferences");
+        }
+    }
 }

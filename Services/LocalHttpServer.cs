@@ -104,7 +104,7 @@ public class LocalHttpServer : IDisposable
                                 align-items: center;
                                 height: 100vh;
                                 margin: 0;
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                background: linear-gradient(135deg, #ffffffff 0%, #dbdbdbff 100%);
                             }
                             .container {
                                 background: white;
@@ -120,7 +120,7 @@ public class LocalHttpServer : IDisposable
                     </head>
                     <body>
                         <div class='container'>
-                            <h1>✓ Authentication Successful!</h1>
+                            <h1>Authentication Successful!</h1>
                             <p>Processing your login...</p>
                             <p class='status' id='status'>Extracting tokens...</p>
                         </div>
