@@ -186,6 +186,10 @@ public partial class DiscoverViewModel : ViewModelBase
                     // Remove from favorites (use clean copy to match the hash)
                     var favoriteCopy = CreateFavoriteCopy(mealPlan);
                     _favoritesService.RemoveFromFavorites(favoriteCopy);
+
+                    // Update favorite status in MealPlanViewModel if this meal plan is currently loaded
+                    _mealPlanViewModel?.UpdateFavoriteStatus();
+
                     Logger.Instance.Information("Unliked and removed from favorites: {Name} (Likes: {Count})", mealPlan.Name, likesCount);
                     StatusMessage = $"Unliked '{mealPlan.Name}'";
 
@@ -206,6 +210,10 @@ public partial class DiscoverViewModel : ViewModelBase
                     // Add to favorites (create a copy without shared metadata)
                     var favoriteMealPlan = CreateFavoriteCopy(mealPlan);
                     _favoritesService.AddToFavorites(favoriteMealPlan);
+
+                    // Update favorite status in MealPlanViewModel if this meal plan is currently loaded
+                    _mealPlanViewModel?.UpdateFavoriteStatus();
+
                     Logger.Instance.Information("Liked and added to favorites: {Name} (Likes: {Count})", mealPlan.Name, likesCount);
                     StatusMessage = $"Liked '{mealPlan.Name}' and added to favorites";
 

@@ -482,7 +482,7 @@ public partial class MealPlanViewModel : ViewModelBase
         }
     }
 
-    private void UpdateFavoriteStatus()
+    public void UpdateFavoriteStatus()
     {
         try
         {
