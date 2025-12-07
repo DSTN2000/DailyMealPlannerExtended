@@ -10,6 +10,7 @@ public enum SyncOperation
     SyncPreferences,
     SyncSnapshot,
     SyncFavorite,
+    DeleteFavorite,
     DownloadAllData
 }
 
@@ -162,6 +163,13 @@ public class AutoSyncService
                 if (operation.Data is DailyMealPlan mealPlan)
                 {
                     await SyncFavoriteAsync(client, userId, mealPlan);
+                }
+                break;
+
+            case SyncOperation.DeleteFavorite:
+                if (operation.Data is DailyMealPlan deletedMealPlan)
+                {
+                    await DeleteFavoriteAsync(client, userId, deletedMealPlan);
                 }
                 break;
 
@@ -515,10 +523,48 @@ public class AutoSyncService
                 await client.From<UserFavoriteRecord>().Insert(newRecord);
                 Logger.Instance.Debug("Synced favorite: {Name}", mealPlan.Name);
             }
+            else
+            {
+                // Update existing favorite (for images/notes changes)
+                var record = existing.Models[0];
+                record.MealPlanXml = xml;
+                record.Name = mealPlan.Name;
+                record.Date = mealPlan.Date.ToString("yyyy-MM-dd");
+                record.TotalCalories = mealPlan.TotalCalories;
+                record.TotalProtein = mealPlan.TotalProtein;
+                record.TotalFat = mealPlan.TotalFat;
+                record.TotalCarbohydrates = mealPlan.TotalCarbohydrates;
+                record.UpdatedAt = DateTime.UtcNow;
+
+                await client.From<UserFavoriteRecord>().Update(record);
+                Logger.Instance.Debug("Updated favorite: {Name}", mealPlan.Name);
+            }
         }
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to sync favorite");
+            throw;
+        }
+    }
+
+    private async Task DeleteFavoriteAsync(Supabase.Client client, string userId, DailyMealPlan mealPlan)
+    {
+        try
+        {
+            var hash = ComputeMealPlanHash(mealPlan);
+
+            // Delete the favorite from cloud
+            await client
+                .From<UserFavoriteRecord>()
+                .Where(x => x.UserId == userId)
+                .Where(x => x.MealPlanHash == hash)
+                .Delete();
+
+            Logger.Instance.Debug("Deleted favorite from cloud: {Name}", mealPlan.Name);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to delete favorite from cloud");
             throw;
         }
     }

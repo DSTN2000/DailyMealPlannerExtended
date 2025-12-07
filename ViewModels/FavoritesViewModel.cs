@@ -10,6 +10,7 @@ public partial class FavoritesViewModel : ViewModelBase
 {
     private readonly FavoriteMealPlansService _favoritesService;
     private readonly MealPlanViewModel? _mealPlanViewModel;
+    private readonly AutoSyncService? _autoSyncService;
     private List<(string fileName, DailyMealPlan mealPlan)> _allFavorites = new();
     private const int PageSize = 10;
 
@@ -36,7 +37,7 @@ public partial class FavoritesViewModel : ViewModelBase
     public FavoritesViewModel(MealPlanViewModel mealPlanViewModel, AutoSyncService? autoSyncService = null) : this()
     {
         _mealPlanViewModel = mealPlanViewModel;
-        // AutoSyncService stored for potential future use (e.g., syncing favorites)
+        _autoSyncService = autoSyncService;
 
         // Subscribe to MealPlanViewModel's IsReadOnly changes
         if (_mealPlanViewModel != null)
@@ -133,6 +134,12 @@ public partial class FavoritesViewModel : ViewModelBase
         {
             _favoritesService.RemoveFromFavorites(mealPlan);
             Logger.Instance.Information("Removed from favorites: {Name}", mealPlan.Name);
+
+            // Queue favorite deletion for syncing to cloud if authenticated
+            if (_autoSyncService != null)
+            {
+                _autoSyncService.QueueSync(SyncOperation.DeleteFavorite, mealPlan);
+            }
 
             // Reload favorites and update current page
             LoadFavorites();

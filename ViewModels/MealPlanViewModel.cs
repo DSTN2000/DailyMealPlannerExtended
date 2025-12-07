@@ -499,18 +499,24 @@ public partial class MealPlanViewModel : ViewModelBase
                 // Remove from favorites
                 _favoritesService.RemoveFromFavorites(CurrentMealPlan);
                 Logger.Instance.Information("Removed meal plan from favorites: {Name}", CurrentMealPlan.Name);
+
+                // Queue favorite deletion for syncing to cloud if authenticated
+                if (_autoSyncService != null)
+                {
+                    _autoSyncService.QueueSync(SyncOperation.DeleteFavorite, CurrentMealPlan);
+                }
             }
             else
             {
                 // Add to favorites
                 _favoritesService.AddToFavorites(CurrentMealPlan);
                 Logger.Instance.Information("Added meal plan to favorites: {Name}", CurrentMealPlan.Name);
-            }
 
-            // Queue favorite for syncing to cloud if authenticated
-            if (_autoSyncService != null)
-            {
-                _autoSyncService.QueueSync(SyncOperation.SyncFavorite, CurrentMealPlan);
+                // Queue favorite for syncing to cloud if authenticated
+                if (_autoSyncService != null)
+                {
+                    _autoSyncService.QueueSync(SyncOperation.SyncFavorite, CurrentMealPlan);
+                }
             }
 
             // Update favorite status
