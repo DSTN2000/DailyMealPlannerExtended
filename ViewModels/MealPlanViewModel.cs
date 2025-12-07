@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DailyMealPlannerExtended.Services;
@@ -32,6 +33,15 @@ public partial class MealPlanViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isAuthenticated;
 
+    /// <summary>
+    /// Cached snapshot progress data for the currently visible calendar month.
+    /// Key: Date, Value: Calories progress percentage
+    /// </summary>
+    public Dictionary<DateTime, double> MonthSnapshotProgress { get; private set; } = new();
+
+    private int _cachedMonth = -1;
+    private int _cachedYear = -1;
+
     public MealPlanViewModel(SupabaseAuthService? authService = null, AutoSyncService? autoSyncService = null)
     {
         _snapshotService = new();
@@ -54,6 +64,9 @@ public partial class MealPlanViewModel : ViewModelBase
 
         // Update favorite status
         UpdateFavoriteStatus();
+
+        // Load initial month snapshot data for calendar coloring
+        LoadMonthSnapshotData(SelectedDate.Year, SelectedDate.Month);
     }
 
     partial void OnSelectedDateChanged(DateTime value)
@@ -63,6 +76,67 @@ public partial class MealPlanViewModel : ViewModelBase
 
         Logger.Instance.Information("Getting the meal plan for {Date}", value.ToShortDateString());
         CurrentMealPlan = GetOrCreateMealPlan(value);
+
+        // Refresh month snapshot data if we've moved to a different month
+        RefreshMonthSnapshotDataIfNeeded(value);
+    }
+
+    /// <summary>
+    /// Refreshes the month snapshot data if the selected date is in a different month
+    /// than the currently cached month. This is used for calendar day coloring.
+    /// </summary>
+    private void RefreshMonthSnapshotDataIfNeeded(DateTime date)
+    {
+        if (date.Month != _cachedMonth || date.Year != _cachedYear)
+        {
+            LoadMonthSnapshotData(date.Year, date.Month);
+        }
+    }
+
+    /// <summary>
+    /// Loads all snapshot data for the given month and calculates calories progress
+    /// for each day. Used to color the calendar cells.
+    /// </summary>
+    private void LoadMonthSnapshotData(int year, int month)
+    {
+        try
+        {
+            MonthSnapshotProgress.Clear();
+
+            // Get all snapshot dates
+            var snapshotDates = _snapshotService.GetAllSnapshotDates();
+
+            // Filter to only dates in the specified month
+            foreach (var date in snapshotDates)
+            {
+                if (date.Year == year && date.Month == month)
+                {
+                    var snapshot = _snapshotService.LoadSnapshot(date);
+                    if (snapshot != null && snapshot.UserPreferences != null)
+                    {
+                        // Calculate calories progress for this day
+                        var dailyCalories = snapshot.UserPreferences.DailyCalories;
+                        var actualCalories = snapshot.MealPlan.TotalCalories;
+
+                        var progress = dailyCalories > 0
+                            ? (actualCalories / dailyCalories) * 100
+                            : 0;
+
+                        MonthSnapshotProgress[date.Date] = progress;
+                    }
+                }
+            }
+
+            _cachedMonth = month;
+            _cachedYear = year;
+
+            Logger.Instance.Debug("Loaded {Count} snapshots for {Year}-{Month:D2}",
+                MonthSnapshotProgress.Count, year, month);
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to load month snapshot data for {Year}-{Month}", year, month);
+        }
     }
 
     /// <summary>
@@ -275,43 +349,10 @@ public partial class MealPlanViewModel : ViewModelBase
         : 0;
 
     // Color properties based on progress (green at 90-110%, red when far off)
-    public string CaloriesProgressColor => GetProgressColor(CaloriesProgress);
-    public string ProteinProgressColor => GetProgressColor(ProteinProgress);
-    public string FatProgressColor => GetProgressColor(FatProgress);
-    public string CarbsProgressColor => GetProgressColor(CarbsProgress);
-
-    private static string GetProgressColor(double progress)
-    {
-        // Color constants
-        const string Red = "#F44336";
-        const string Orange = "#FF9800";
-        const string Yellow = "#FFC107";
-        const string LightGreen = "#8BC34A";
-        const string Green = "#4CAF50";
-
-        // Progress thresholds
-        const double VeryLow = 40;
-        const double Low = 70;
-        const double Approaching = 85;
-        const double OptimalMin = 90;
-        const double OptimalMax = 110;
-        const double SlightlyOver = 115;
-        const double High = 130;
-        const double VeryHigh = 150;
-
-        return progress switch
-        {
-            < VeryLow => Red,
-            < Low => Orange,
-            < Approaching => Yellow,
-            < OptimalMin => LightGreen,
-            <= OptimalMax => Green,
-            < SlightlyOver => LightGreen,
-            < High => Yellow,
-            < VeryHigh => Orange,
-            _ => Red
-        };
-    }
+    public string CaloriesProgressColor => Config.GetProgressColorHex(CaloriesProgress);
+    public string ProteinProgressColor => Config.GetProgressColorHex(ProteinProgress);
+    public string FatProgressColor => Config.GetProgressColorHex(FatProgress);
+    public string CarbsProgressColor => Config.GetProgressColorHex(CarbsProgress);
 
     [RelayCommand]
     private void SaveDaySnapshot()
@@ -325,6 +366,9 @@ public partial class MealPlanViewModel : ViewModelBase
                 CurrentMealPlan.TotalProtein,
                 CurrentMealPlan.TotalFat,
                 CurrentMealPlan.TotalCarbohydrates);
+
+            // Refresh month snapshot data to update calendar colors
+            RefreshMonthSnapshotDataIfNeeded(CurrentMealPlan.Date);
         }
         catch (Exception ex)
         {

@@ -3,11 +3,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:DailyMealPlannerExtended.ViewModels"
+             xmlns:converters="using:DailyMealPlannerExtended.Converters"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="DailyMealPlannerExtended.Views.History.HistoryView"
              x:DataType="vm:HistoryViewModel"
              x:CompileBindings="True"
              Background="Transparent">
+
+    <UserControl.Resources>
+        <converters:CalendarDaySnapshotColorConverter x:Key="CalendarDaySnapshotColorConverter"/>
+    </UserControl.Resources>
 
     <Design.DataContext>
         <vm:HistoryViewModel/>
@@ -36,7 +41,19 @@
                              DisplayDateEnd="{Binding Today}"
                              FirstDayOfWeek="Monday"
                              HorizontalAlignment="Center"
-                             VerticalAlignment="Top"/>
+                             VerticalAlignment="Top">
+                        <Calendar.Styles>
+                            <!-- Style calendar day buttons to show snapshot progress colors -->
+                            <Style Selector="CalendarDayButton">
+                                <Setter Property="Background">
+                                    <MultiBinding Converter="{StaticResource CalendarDaySnapshotColorConverter}">
+                                        <Binding x:DataType="CalendarDayButton"/>
+                                        <Binding Path="$parent[UserControl].DataContext.MealPlanViewModel"/>
+                                    </MultiBinding>
+                                </Setter>
+                            </Style>
+                        </Calendar.Styles>
+                    </Calendar>
                 </ScrollViewer>
             </Grid>
         </Border>

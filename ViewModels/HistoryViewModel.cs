@@ -19,6 +19,11 @@ public partial class HistoryViewModel : ViewModelBase
 
     public DateTime Today => DateTime.Today;
 
+    /// <summary>
+    /// Expose MealPlanViewModel for calendar coloring converter to access MonthSnapshotProgress
+    /// </summary>
+    public MealPlanViewModel MealPlanViewModel => _mealPlanViewModel;
+
     public HistoryViewModel(MealPlanViewModel mealPlanViewModel, AutoSyncService? autoSyncService = null)
     {
         _snapshotService = new DaySnapshotService();
