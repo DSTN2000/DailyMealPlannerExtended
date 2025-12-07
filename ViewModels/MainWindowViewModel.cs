@@ -73,12 +73,16 @@ public partial class MainWindowViewModel : ViewModelBase
             // Trigger initial sync in background
             if (AutoSyncService != null)
             {
-                // Subscribe to sync completion to reload preferences
+                // Subscribe to sync completion to reload preferences and snapshots
                 AutoSyncService.SyncCompleted += (s, e) =>
                 {
                     // Reload user preferences after sync completes
                     MealPlanViewModel.ReloadUserPreferences();
                     Logger.Instance.Information("Reloaded user preferences after initial sync");
+
+                    // Reload snapshots and refresh calendar colors
+                    MealPlanViewModel.ReloadSnapshots();
+                    Logger.Instance.Information("Reloaded snapshots after initial sync");
                 };
 
                 _ = Task.Run(async () =>

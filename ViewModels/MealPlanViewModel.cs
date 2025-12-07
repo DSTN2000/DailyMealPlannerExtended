@@ -152,6 +152,12 @@ public partial class MealPlanViewModel : ViewModelBase
             {
                 _favoritesService.UpdateFavorite(CurrentMealPlan);
                 Logger.Instance.Debug("Auto-saved favorite meal plan: {Name}", CurrentMealPlan.Name);
+
+                // Queue favorite for syncing to cloud if authenticated
+                if (_autoSyncService != null)
+                {
+                    _autoSyncService.QueueSync(SyncOperation.SyncFavorite, CurrentMealPlan);
+                }
             }
             catch (Exception ex)
             {
@@ -367,8 +373,19 @@ public partial class MealPlanViewModel : ViewModelBase
                 CurrentMealPlan.TotalFat,
                 CurrentMealPlan.TotalCarbohydrates);
 
-            // Refresh month snapshot data to update calendar colors
-            RefreshMonthSnapshotDataIfNeeded(CurrentMealPlan.Date);
+            // Queue snapshot for syncing to cloud if authenticated
+            if (_autoSyncService != null)
+            {
+                var snapshot = new DaySnapshot
+                {
+                    MealPlan = CurrentMealPlan,
+                    UserPreferences = User
+                };
+                _autoSyncService.QueueSync(SyncOperation.SyncSnapshot, snapshot);
+            }
+
+            // Force refresh month snapshot data to update calendar colors immediately
+            LoadMonthSnapshotData(CurrentMealPlan.Date.Year, CurrentMealPlan.Date.Month);
         }
         catch (Exception ex)
         {
@@ -490,6 +507,12 @@ public partial class MealPlanViewModel : ViewModelBase
                 Logger.Instance.Information("Added meal plan to favorites: {Name}", CurrentMealPlan.Name);
             }
 
+            // Queue favorite for syncing to cloud if authenticated
+            if (_autoSyncService != null)
+            {
+                _autoSyncService.QueueSync(SyncOperation.SyncFavorite, CurrentMealPlan);
+            }
+
             // Update favorite status
             UpdateFavoriteStatus();
         }
@@ -557,6 +580,31 @@ public partial class MealPlanViewModel : ViewModelBase
         catch (Exception ex)
         {
             Logger.Instance.Error(ex, "Failed to reload user preferences");
+        }
+    }
+
+    /// <summary>
+    /// Reloads snapshots from local storage and refreshes calendar colors (called after sync completes)
+    /// </summary>
+    public void ReloadSnapshots()
+    {
+        try
+        {
+            // Reload the current meal plan from snapshot if it exists
+            var snapshot = _snapshotService.LoadSnapshot(SelectedDate);
+            if (snapshot != null)
+            {
+                CurrentMealPlan = GetOrCreateMealPlan(SelectedDate);
+                Logger.Instance.Information("Reloaded snapshot for {Date}", SelectedDate.ToShortDateString());
+            }
+
+            // Refresh month snapshot data to update calendar colors
+            LoadMonthSnapshotData(SelectedDate.Year, SelectedDate.Month);
+            Logger.Instance.Information("Refreshed calendar colors after sync");
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to reload snapshots");
         }
     }
 }
