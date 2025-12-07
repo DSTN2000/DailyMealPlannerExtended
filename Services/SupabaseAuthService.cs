@@ -419,28 +419,53 @@ public class SupabaseAuthService
                 var accessToken = sessionData["access_token"].ToString();
                 var refreshToken = sessionData["refresh_token"].ToString();
 
-                if (!string.IsNullOrEmpty(accessToken) && _client != null)
+                if (!string.IsNullOrEmpty(refreshToken) && _client != null)
                 {
-                    Logger.Instance.Information("Attempting to set session with tokens...");
-                    var session = await _client.Auth.SetSession(accessToken!, refreshToken!);
-
-                    if (session != null)
+                    try
                     {
-                        // Validate account matches local data
-                        await ValidateAccountMatchAsync();
+                        Logger.Instance.Information("Attempting to restore session with tokens...");
 
-                        _connectivityService.UpdateAuthenticatedStatus(true);
-                        Logger.Instance.Information("Session restored successfully: {Email}", CurrentUser?.Email);
-                        return true;
+                        // Try to set the session with both tokens
+                        // SetSession will automatically refresh if the access token is expired
+                        var session = await _client.Auth.SetSession(accessToken!, refreshToken!, forceAccessTokenRefresh: true);
+
+                        if (session != null)
+                        {
+                            // Save the refreshed session
+                            await SaveSessionAsync(session);
+
+                            // Validate account matches local data
+                            await ValidateAccountMatchAsync();
+
+                            _connectivityService.UpdateAuthenticatedStatus(true);
+                            Logger.Instance.Information("Session restored successfully: {Email}", CurrentUser?.Email);
+                            return true;
+                        }
+                        else
+                        {
+                            Logger.Instance.Warning("SetSession returned null - tokens may be expired");
+                        }
                     }
-                    else
+                    catch (Supabase.Gotrue.Exceptions.GotrueException ex) when (ex.Message.Contains("expired") || ex.Message.Contains("invalid"))
                     {
-                        Logger.Instance.Warning("SetSession returned null - tokens may be expired");
+                        // If tokens are expired/invalid, clean up and require fresh login
+                        Logger.Instance.Warning(ex, "Session tokens expired or invalid - deleting session file");
+                        try
+                        {
+                            if (File.Exists(sessionFile))
+                            {
+                                File.Delete(sessionFile);
+                            }
+                        }
+                        catch (Exception deleteEx)
+                        {
+                            Logger.Instance.Warning(deleteEx, "Failed to delete expired session file");
+                        }
                     }
                 }
                 else
                 {
-                    Logger.Instance.Warning("Missing access token or client not initialized");
+                    Logger.Instance.Warning("Missing refresh token or client not initialized");
                 }
             }
             else
