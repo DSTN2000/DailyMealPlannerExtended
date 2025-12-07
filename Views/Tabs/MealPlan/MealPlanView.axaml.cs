@@ -44,7 +44,7 @@ public partial class MealPlanView : UserControl
         e.Handled = true;
     }
 
-    private async void MealPlanName_DoubleTapped(object? sender, TappedEventArgs e)
+    private void MealPlanName_DoubleTapped(object? sender, TappedEventArgs e)
     {
         if (sender is not TextBlock textBlock) return;
         if (DataContext is not MealPlanViewModel viewModel) return;
@@ -76,7 +76,7 @@ public partial class MealPlanView : UserControl
         var editCompleted = false;
 
         // Handle completion of editing
-        async Task CompleteEdit()
+        void CompleteEdit()
         {
             if (editCompleted) return;
             editCompleted = true;
@@ -93,12 +93,12 @@ public partial class MealPlanView : UserControl
             stackPanel.Children.Insert(0, textBlock);
         }
 
-        textBox.LostFocus += async (s, ev) => await CompleteEdit();
-        textBox.KeyDown += async (s, ev) =>
+        textBox.LostFocus += (s, ev) => CompleteEdit();
+        textBox.KeyDown += (s, ev) =>
         {
             if (ev.Key == Key.Enter)
             {
-                await CompleteEdit();
+                CompleteEdit();
                 ev.Handled = true;
             }
             else if (ev.Key == Key.Escape)
@@ -115,7 +115,7 @@ public partial class MealPlanView : UserControl
         };
     }
 
-    private async void MealTimeName_DoubleTapped(object? sender, TappedEventArgs e)
+    private void MealTimeName_DoubleTapped(object? sender, TappedEventArgs e)
     {
         if (sender is not TextBlock textBlock) return;
         if (textBlock.DataContext is not MealTime mealTime) return;
@@ -151,7 +151,7 @@ public partial class MealPlanView : UserControl
         var editCompleted = false;
 
         // Handle completion of editing
-        async Task CompleteEdit()
+        async Task CompleteEditAsync()
         {
             if (editCompleted) return;
             editCompleted = true;
@@ -198,12 +198,12 @@ public partial class MealPlanView : UserControl
             }
         }
 
-        textBox.LostFocus += async (s, ev) => await CompleteEdit();
+        textBox.LostFocus += async (s, ev) => await CompleteEditAsync();
         textBox.KeyDown += async (s, ev) =>
         {
             if (ev.Key == Key.Enter)
             {
-                await CompleteEdit();
+                await CompleteEditAsync();
                 ev.Handled = true;
             }
             else if (ev.Key == Key.Escape)
