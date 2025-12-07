@@ -35,8 +35,11 @@ public class SupabaseDiscoverService
                 return false;
             }
 
-            var hash = ComputeMealPlanHash(mealPlan);
-            var xml = MealPlanService.SerializeMealPlanToXml(mealPlan);
+            // Strip images and notes before sharing (privacy & size optimization)
+            var cleanMealPlan = MealPlanService.StripImagesAndNotes(mealPlan);
+
+            var hash = ComputeMealPlanHash(cleanMealPlan);
+            var xml = MealPlanService.SerializeMealPlanToXml(cleanMealPlan);
 
             // Check if already shared
             var existing = await client
@@ -57,12 +60,12 @@ public class SupabaseDiscoverService
                 UserEmail = userEmail,
                 MealPlanXml = xml,
                 MealPlanHash = hash,
-                Name = mealPlan.Name,
-                Date = mealPlan.Date.ToString("yyyy-MM-dd"),
-                TotalCalories = mealPlan.TotalCalories,
-                TotalProtein = mealPlan.TotalProtein,
-                TotalFat = mealPlan.TotalFat,
-                TotalCarbohydrates = mealPlan.TotalCarbohydrates,
+                Name = cleanMealPlan.Name,
+                Date = cleanMealPlan.Date.ToString("yyyy-MM-dd"),
+                TotalCalories = cleanMealPlan.TotalCalories,
+                TotalProtein = cleanMealPlan.TotalProtein,
+                TotalFat = cleanMealPlan.TotalFat,
+                TotalCarbohydrates = cleanMealPlan.TotalCarbohydrates,
                 LikesCount = 0,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow

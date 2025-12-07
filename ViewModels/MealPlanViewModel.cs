@@ -58,8 +58,32 @@ public partial class MealPlanViewModel : ViewModelBase
 
     partial void OnSelectedDateChanged(DateTime value)
     {
+        // Save current meal plan to favorites if it's favorited (preserves images/notes)
+        SaveCurrentMealPlanToFavoritesIfNeeded();
+
         Logger.Instance.Information("Getting the meal plan for {Date}", value.ToShortDateString());
         CurrentMealPlan = GetOrCreateMealPlan(value);
+    }
+
+    /// <summary>
+    /// Saves the current meal plan to favorites if it's already favorited.
+    /// This preserves images and notes without requiring manual re-favoriting.
+    /// Called automatically on date changes and app close.
+    /// </summary>
+    public void SaveCurrentMealPlanToFavoritesIfNeeded()
+    {
+        if (IsFavorite && CurrentMealPlan != null)
+        {
+            try
+            {
+                _favoritesService.UpdateFavorite(CurrentMealPlan);
+                Logger.Instance.Debug("Auto-saved favorite meal plan: {Name}", CurrentMealPlan.Name);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Warning(ex, "Failed to auto-save favorite meal plan");
+            }
+        }
     }
 
     partial void OnCurrentMealPlanChanged(DailyMealPlan value)

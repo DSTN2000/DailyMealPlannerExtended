@@ -144,6 +144,21 @@ public partial class App : Application
             DataContext = _mainWindowViewModel,
         };
 
+        // Subscribe to window closing event to save favorites before exit
+        mainWindow.Closing += (s, e) =>
+        {
+            try
+            {
+                // Save current meal plan to favorites if it's favorited (preserves images/notes)
+                _mainWindowViewModel?.MealPlanViewModel?.SaveCurrentMealPlanToFavoritesIfNeeded();
+                Logger.Instance.Information("Saved current meal plan to favorites before closing");
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Warning(ex, "Failed to save current meal plan on window close");
+            }
+        };
+
         // If login window exists, close it
         if (desktop.MainWindow != null && desktop.MainWindow is not MainWindow)
         {

@@ -5,6 +5,40 @@ namespace DailyMealPlannerExtended.Services;
 
 public class MealPlanService
 {
+    /// <summary>
+    /// Creates a clean copy of a meal plan without images and notes (for sharing)
+    /// </summary>
+    public static DailyMealPlan StripImagesAndNotes(DailyMealPlan mealPlan)
+    {
+        var cleanPlan = new DailyMealPlan
+        {
+            Date = mealPlan.Date,
+            Name = mealPlan.Name
+        };
+
+        cleanPlan.MealTimes.Clear();
+
+        foreach (var mealTime in mealPlan.MealTimes)
+        {
+            var cleanMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
+
+            foreach (var item in mealTime.Items)
+            {
+                var cleanItem = new MealPlanItem(item.Product, item.Weight)
+                {
+                    // Explicitly set Image and Note to null
+                    Image = null,
+                    Note = null
+                };
+                cleanMealTime.Items.Add(cleanItem);
+            }
+
+            cleanPlan.MealTimes.Add(cleanMealTime);
+        }
+
+        return cleanPlan;
+    }
+
     // Reusable meal plan XML serialization (no user preferences, just the meal plan)
     public static string SerializeMealPlanToXml(DailyMealPlan mealPlan)
     {

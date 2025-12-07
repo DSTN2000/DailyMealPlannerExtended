@@ -238,10 +238,12 @@ public partial class DiscoverViewModel : ViewModelBase
 
             foreach (var item in mealTime.Items)
             {
+                // Don't copy images and notes from shared meal plans
+                // Users should add their own images and notes
                 var newItem = new MealPlanItem(item.Product, item.Weight)
                 {
-                    Image = item.Image,
-                    Note = item.Note
+                    Image = null,
+                    Note = null
                 };
                 newMealTime.Items.Add(newItem);
             }

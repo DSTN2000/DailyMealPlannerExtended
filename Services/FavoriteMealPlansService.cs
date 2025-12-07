@@ -109,6 +109,59 @@ public class FavoriteMealPlansService
         }
     }
 
+    /// <summary>
+    /// Updates an existing favorite with current state (including images and notes)
+    /// </summary>
+    public void UpdateFavorite(DailyMealPlan mealPlan)
+    {
+        try
+        {
+            var xml = MealPlanService.SerializeMealPlanToXml(mealPlan);
+            var hash = ComputeMealPlanHash(mealPlan);
+
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            // Update existing favorite (hash stays the same, XML changes with images/notes)
+            var updateCommand = connection.CreateCommand();
+            updateCommand.CommandText = @"
+                UPDATE Favorites
+                SET MealPlanXml = $xml,
+                    Name = $name,
+                    Date = $date,
+                    TotalCalories = $calories,
+                    TotalProtein = $protein,
+                    TotalFat = $fat,
+                    TotalCarbohydrates = $carbs
+                WHERE MealPlanHash = $hash";
+
+            updateCommand.Parameters.AddWithValue("$xml", xml);
+            updateCommand.Parameters.AddWithValue("$hash", hash);
+            updateCommand.Parameters.AddWithValue("$name", mealPlan.Name);
+            updateCommand.Parameters.AddWithValue("$date", mealPlan.Date.ToString("yyyy-MM-dd"));
+            updateCommand.Parameters.AddWithValue("$calories", mealPlan.TotalCalories);
+            updateCommand.Parameters.AddWithValue("$protein", mealPlan.TotalProtein);
+            updateCommand.Parameters.AddWithValue("$fat", mealPlan.TotalFat);
+            updateCommand.Parameters.AddWithValue("$carbs", mealPlan.TotalCarbohydrates);
+
+            var rowsAffected = updateCommand.ExecuteNonQuery();
+
+            if (rowsAffected > 0)
+            {
+                Logger.Instance.Debug("Updated favorite meal plan: {Name} (preserved images/notes)", mealPlan.Name);
+            }
+            else
+            {
+                Logger.Instance.Warning("Tried to update favorite but meal plan not found: {Name}", mealPlan.Name);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Error(ex, "Failed to update favorite meal plan");
+            throw;
+        }
+    }
+
     private static string ComputeHash(string xml)
     {
         using var sha256 = System.Security.Cryptography.SHA256.Create();
