@@ -24,11 +24,10 @@ public partial class HistoryViewModel : ViewModelBase
     /// </summary>
     public MealPlanViewModel MealPlanViewModel => _mealPlanViewModel;
 
-    public HistoryViewModel(MealPlanViewModel mealPlanViewModel, AutoSyncService? autoSyncService = null)
+    public HistoryViewModel(MealPlanViewModel mealPlanViewModel)
     {
         _snapshotService = new DaySnapshotService();
         _mealPlanViewModel = mealPlanViewModel;
-        // AutoSyncService stored for potential future use (e.g., syncing snapshots)
         LoadAvailableDates();
     }
 

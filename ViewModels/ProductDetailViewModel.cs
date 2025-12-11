@@ -16,6 +16,7 @@ public partial class ProductDetailViewModel : ViewModelBase
 {
     private readonly MealPlanViewModel? _mealPlanViewModel;
     private readonly CloudflareAIService _aiService;
+    private readonly ImageService _imageService;
 
     [ObservableProperty]
     private Product? _product;
@@ -82,6 +83,7 @@ public partial class ProductDetailViewModel : ViewModelBase
     public ProductDetailViewModel()
     {
         _aiService = new CloudflareAIService();
+        _imageService = new ImageService();
     }
 
     public ProductDetailViewModel(MealPlanViewModel mealPlanViewModel) : this()
@@ -309,29 +311,6 @@ public partial class ProductDetailViewModel : ViewModelBase
 
     private async Task<byte[]> ResizeImageAsync(byte[] imageBytes, int maxHeight)
     {
-        await using var inputStream = new System.IO.MemoryStream(imageBytes);
-        using var bitmap = new Avalonia.Media.Imaging.Bitmap(inputStream);
-
-        // Calculate new dimensions maintaining aspect ratio
-        var originalWidth = bitmap.PixelSize.Width;
-        var originalHeight = bitmap.PixelSize.Height;
-
-        if (originalHeight <= maxHeight)
-        {
-            // Image is already smaller than max height, return as is
-            return imageBytes;
-        }
-
-        var scale = (double)maxHeight / originalHeight;
-        var newWidth = (int)(originalWidth * scale);
-        var newHeight = maxHeight;
-
-        // Create resized bitmap
-        var resizedBitmap = bitmap.CreateScaledBitmap(new Avalonia.PixelSize(newWidth, newHeight));
-
-        // Save to memory stream as PNG for lossless compression
-        await using var outputStream = new System.IO.MemoryStream();
-        resizedBitmap.Save(outputStream);
-        return outputStream.ToArray();
+        return await _imageService.ResizeImageAsync(imageBytes, maxHeight);
     }
 }

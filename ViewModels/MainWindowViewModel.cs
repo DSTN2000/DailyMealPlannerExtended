@@ -57,7 +57,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         FavoritesViewModel = new FavoritesViewModel(MealPlanViewModel, AutoSyncService);
         DiscoverViewModel = new DiscoverViewModel(MealPlanViewModel, AuthService);
-        HistoryViewModel = new HistoryViewModel(MealPlanViewModel, AutoSyncService);
+        HistoryViewModel = new HistoryViewModel(MealPlanViewModel);
         AddToMealPlanViewModel = new AddToMealPlanViewModel(MealPlanViewModel);
         CatalogViewModel = new CatalogViewModel(ProductDetailViewModel);
 
