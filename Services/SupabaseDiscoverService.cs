@@ -1,5 +1,6 @@
 using DailyMealPlannerExtended.Models;
 using DailyMealPlannerExtended.Models.Supabase;
+using DailyMealPlannerExtended.Services.Utilities;
 
 namespace DailyMealPlannerExtended.Services;
 
@@ -38,7 +39,7 @@ public class SupabaseDiscoverService
             // Strip images and notes before sharing (privacy & size optimization)
             var cleanMealPlan = MealPlanService.StripImagesAndNotes(mealPlan);
 
-            var hash = ComputeMealPlanHash(cleanMealPlan);
+            var hash = MealPlanHashUtility.ComputeHash(cleanMealPlan);
             var xml = MealPlanService.SerializeMealPlanToXml(cleanMealPlan);
 
             // Check if already shared
@@ -360,51 +361,4 @@ public class SupabaseDiscoverService
         }
     }
 
-    /// <summary>
-    /// Computes a hash for a meal plan to detect duplicates
-    /// </summary>
-    private static string ComputeMealPlanHash(DailyMealPlan mealPlan)
-    {
-        // Create a normalized meal plan for hashing
-        var normalizedPlan = new DailyMealPlan
-        {
-            Date = DateTime.MinValue,
-            Name = mealPlan.Name
-        };
-
-        normalizedPlan.MealTimes.Clear();
-
-        foreach (var mealTime in mealPlan.MealTimes)
-        {
-            var newMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
-
-            foreach (var item in mealTime.Items)
-            {
-                var productCopy = new Product
-                {
-                    Name = item.Product.Name,
-                    Calories = item.Product.Calories,
-                    Protein = item.Product.Protein,
-                    TotalFat = item.Product.TotalFat,
-                    Carbohydrates = item.Product.Carbohydrates,
-                    Sodium = item.Product.Sodium,
-                    Fiber = item.Product.Fiber,
-                    Sugar = item.Product.Sugar,
-                    Serving = item.Product.Serving,
-                    Unit = item.Product.Unit
-                };
-
-                var newItem = new MealPlanItem(productCopy, item.Weight);
-                newMealTime.Items.Add(newItem);
-            }
-
-            normalizedPlan.MealTimes.Add(newMealTime);
-        }
-
-        var xml = MealPlanService.SerializeMealPlanToXml(normalizedPlan);
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var bytes = System.Text.Encoding.UTF8.GetBytes(xml);
-        var hashBytes = sha256.ComputeHash(bytes);
-        return Convert.ToBase64String(hashBytes);
-    }
 }

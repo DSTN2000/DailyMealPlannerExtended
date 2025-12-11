@@ -73,6 +73,11 @@ public partial class ProductDetailViewModel : ViewModelBase
         {
             OnPropertyChanged(nameof(ShowNoteReadOnly));
         }
+        else if (e.PropertyName == nameof(MealPlanItem.Weight))
+        {
+            OnPropertyChanged(nameof(CurrentWeight));
+            OnPropertyChanged(nameof(CurrentServings));
+        }
     }
 
     // Computed properties for view visibility
@@ -281,21 +286,6 @@ public partial class ProductDetailViewModel : ViewModelBase
         Product = item.Product;
         Mode = isEditable ? ProductDetailMode.EditMealItem : ProductDetailMode.ViewMealItem;
         IsVisible = true;
-    }
-
-    partial void OnMealPlanItemChanged(MealPlanItem? value)
-    {
-        if (value != null)
-        {
-            value.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(MealPlanItem.Weight))
-                {
-                    OnPropertyChanged(nameof(CurrentWeight));
-                    OnPropertyChanged(nameof(CurrentServings));
-                }
-            };
-        }
     }
 
 

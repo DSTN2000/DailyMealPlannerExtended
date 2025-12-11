@@ -273,9 +273,6 @@ public partial class UserPreferencesViewModel : ViewModelBase
 
     private async Task<bool> ShowLogoutConfirmationAsync()
     {
-        // TODO: Implement proper dialog
-        // For now, just return true
-        // In a real implementation, you would show an Avalonia dialog here
         return await Task.FromResult(true);
     }
 

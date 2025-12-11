@@ -55,7 +55,7 @@ public class FavoriteMealPlansService
         try
         {
             var xml = MealPlanService.SerializeMealPlanToXml(mealPlan);
-            var hash = ComputeMealPlanHash(mealPlan);
+            var hash = MealPlanHashUtility.ComputeHash(mealPlan);
 
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -107,7 +107,7 @@ public class FavoriteMealPlansService
         try
         {
             var xml = MealPlanService.SerializeMealPlanToXml(mealPlan);
-            var hash = ComputeMealPlanHash(mealPlan);
+            var hash = MealPlanHashUtility.ComputeHash(mealPlan);
 
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -152,66 +152,12 @@ public class FavoriteMealPlansService
         }
     }
 
-    private static string ComputeHash(string xml)
-    {
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var bytes = System.Text.Encoding.UTF8.GetBytes(xml);
-        var hashBytes = sha256.ComputeHash(bytes);
-        return Convert.ToBase64String(hashBytes);
-    }
-
-    private static string ComputeMealPlanHash(DailyMealPlan mealPlan)
-    {
-        // Create a temporary meal plan with normalized date for consistent hashing
-        // This ensures meal plans with the same content but different dates match
-        var normalizedPlan = new DailyMealPlan
-        {
-            Date = DateTime.MinValue, // Use fixed date for hashing
-            Name = mealPlan.Name
-        };
-
-        // Clear default meal times
-        normalizedPlan.MealTimes.Clear();
-
-        // Copy all meal times and items
-        foreach (var mealTime in mealPlan.MealTimes)
-        {
-            var newMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
-
-            foreach (var item in mealTime.Items)
-            {
-                var productCopy = new Product
-                {
-                    Name = item.Product.Name,
-                    Calories = item.Product.Calories,
-                    Protein = item.Product.Protein,
-                    TotalFat = item.Product.TotalFat,
-                    Carbohydrates = item.Product.Carbohydrates,
-                    Sodium = item.Product.Sodium,
-                    Fiber = item.Product.Fiber,
-                    Sugar = item.Product.Sugar,
-                    Serving = item.Product.Serving,
-                    Unit = item.Product.Unit
-                };
-
-                // Exclude Image and Note from hash for performance considerations
-                var newItem = new MealPlanItem(productCopy, item.Weight);
-                newMealTime.Items.Add(newItem);
-            }
-
-            normalizedPlan.MealTimes.Add(newMealTime);
-        }
-
-        // Serialize normalized plan and compute hash
-        var xml = MealPlanService.SerializeMealPlanToXml(normalizedPlan);
-        return ComputeHash(xml);
-    }
 
     public void RemoveFromFavorites(DailyMealPlan mealPlan)
     {
         try
         {
-            var hash = ComputeMealPlanHash(mealPlan);
+            var hash = MealPlanHashUtility.ComputeHash(mealPlan);
 
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -273,7 +219,7 @@ public class FavoriteMealPlansService
     {
         try
         {
-            var hash = ComputeMealPlanHash(mealPlan);
+            var hash = MealPlanHashUtility.ComputeHash(mealPlan);
 
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();

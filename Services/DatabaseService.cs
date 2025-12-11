@@ -1,4 +1,5 @@
 using DailyMealPlannerExtended.Models;
+using DailyMealPlannerExtended.Services.Utilities;
 using Microsoft.Data.Sqlite;
 using Fastenshtein;
 using System.Text.Json;
@@ -15,43 +16,13 @@ public class DatabaseService : IDisposable
     public DatabaseService()
     {
         // Get platform-agnostic app data location
-        var appDataDir = GetAppDataDirectory();
-        var dbPath = Path.Combine(appDataDir, "opennutrition_foods.db");
+        var dbPath = AppDataPathService.GetDatabasePath("opennutrition_foods.db");
         _connectionString = $"Data Source={dbPath}";
 
         if (!File.Exists(dbPath))
         {
             Logger.Instance.Error("Database file not found at: {DbPath}", dbPath);
         }
-    }
-
-    private static string GetAppDataDirectory()
-    {
-        // Match the Python platformdirs pattern
-        var appName = "DailyMealPlannerExtended";
-        var appAuthor = "DailyMealPlanner";
-
-        string baseDir;
-        if (OperatingSystem.IsWindows())
-        {
-            baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        }
-        else if (OperatingSystem.IsMacOS())
-        {
-            baseDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                "Library", "Application Support"
-            );
-        }
-        else // Linux
-        {
-            var xdgDataHome = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
-            baseDir = string.IsNullOrEmpty(xdgDataHome)
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share")
-                : xdgDataHome;
-        }
-
-        return Path.Combine(baseDir, appAuthor, appName);
     }
 
     private async Task<SqliteConnection> GetConnectionAsync()
