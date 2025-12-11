@@ -232,31 +232,18 @@ public partial class DiscoverViewModel : ViewModelBase
 
     private DailyMealPlan CreateFavoriteCopy(DailyMealPlan mealPlan)
     {
-        var favoriteMealPlan = new DailyMealPlan
+        // Use DeepClone but clear images and notes for shared meal plans
+        var favoriteMealPlan = mealPlan.DeepClone(DateTime.Today);
+
+        // Clear images and notes from shared meal plans
+        // Users should add their own images and notes
+        foreach (var mealTime in favoriteMealPlan.MealTimes)
         {
-            Date = DateTime.Today,
-            Name = mealPlan.Name
-        };
-
-        favoriteMealPlan.MealTimes.Clear();
-
-        foreach (var mealTime in mealPlan.MealTimes)
-        {
-            var newMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
-
             foreach (var item in mealTime.Items)
             {
-                // Don't copy images and notes from shared meal plans
-                // Users should add their own images and notes
-                var newItem = new MealPlanItem(item.Product, item.Weight)
-                {
-                    Image = null,
-                    Note = null
-                };
-                newMealTime.Items.Add(newItem);
+                item.Image = null;
+                item.Note = null;
             }
-
-            favoriteMealPlan.MealTimes.Add(newMealTime);
         }
 
         return favoriteMealPlan;
@@ -273,31 +260,8 @@ public partial class DiscoverViewModel : ViewModelBase
                 return;
             }
 
-            // Create a deep copy of the meal plan and set it to today's date
-            var newMealPlan = new DailyMealPlan
-            {
-                Date = _mealPlanViewModel.SelectedDate,
-                Name = mealPlan.Name
-            };
-
-            newMealPlan.MealTimes.Clear();
-
-            foreach (var mealTime in mealPlan.MealTimes)
-            {
-                var newMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
-
-                foreach (var item in mealTime.Items)
-                {
-                    var newItem = new MealPlanItem(item.Product, item.Weight)
-                    {
-                        Image = item.Image,
-                        Note = item.Note
-                    };
-                    newMealTime.Items.Add(newItem);
-                }
-
-                newMealPlan.MealTimes.Add(newMealTime);
-            }
+            // Create a deep copy of the meal plan and set it to the selected date
+            var newMealPlan = mealPlan.DeepClone(_mealPlanViewModel.SelectedDate);
 
             _mealPlanViewModel.CurrentMealPlan = newMealPlan;
 

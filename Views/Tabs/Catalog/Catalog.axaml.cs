@@ -11,7 +11,7 @@ public partial class Catalog : UserControl
     public Catalog()
     {
         InitializeComponent();
-        DataContext = new CatalogViewModel();
+        // DataContext will be set by the parent view to use the shared instance from MainWindowViewModel
     }
 
     private void OnLabelSelected(object? sender, SelectionChangedEventArgs e)

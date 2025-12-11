@@ -88,4 +88,40 @@ public partial class DailyMealPlan : ObservableObject
         OnPropertyChanged(nameof(TotalFiber));
         OnPropertyChanged(nameof(TotalSugar));
     }
+
+    /// <summary>
+    /// Creates a deep copy of this meal plan with all meal times and items.
+    /// Useful for copying meal plans to different dates or creating favorites.
+    /// </summary>
+    /// <param name="newDate">The date for the cloned meal plan. If null, uses the current date.</param>
+    /// <returns>A complete deep copy of this meal plan</returns>
+    public DailyMealPlan DeepClone(DateTime? newDate = null)
+    {
+        var clone = new DailyMealPlan
+        {
+            Date = newDate ?? this.Date,
+            Name = this.Name
+        };
+
+        // Clear the default collection and clone all meal times
+        clone.MealTimes.Clear();
+        foreach (var mealTime in this.MealTimes)
+        {
+            var clonedMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
+
+            foreach (var item in mealTime.Items)
+            {
+                var clonedItem = new MealPlanItem(item.Product, item.Weight)
+                {
+                    Image = item.Image,
+                    Note = item.Note
+                };
+                clonedMealTime.Items.Add(clonedItem);
+            }
+
+            clone.MealTimes.Add(clonedMealTime);
+        }
+
+        return clone;
+    }
 }

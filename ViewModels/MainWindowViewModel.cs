@@ -12,6 +12,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public HistoryViewModel HistoryViewModel { get; }
     public ProductDetailViewModel ProductDetailViewModel { get; }
     public AddToMealPlanViewModel AddToMealPlanViewModel { get; }
+    public CatalogViewModel CatalogViewModel { get; }
     public UserPreferencesViewModel UserPreferencesViewModel { get; }
 
     public SupabaseAuthService? AuthService { get; }
@@ -58,6 +59,7 @@ public partial class MainWindowViewModel : ViewModelBase
         DiscoverViewModel = new DiscoverViewModel(MealPlanViewModel, AuthService);
         HistoryViewModel = new HistoryViewModel(MealPlanViewModel, AutoSyncService);
         AddToMealPlanViewModel = new AddToMealPlanViewModel(MealPlanViewModel);
+        CatalogViewModel = new CatalogViewModel(ProductDetailViewModel);
 
         // Subscribe to logout event
         UserPreferencesViewModel.LoggedOut += (s, e) =>

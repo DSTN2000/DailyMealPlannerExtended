@@ -161,34 +161,8 @@ public partial class FavoritesViewModel : ViewModelBase
                 return;
             }
 
-            // Create a deep copy of the meal plan and set it to today's date
-            var newMealPlan = new DailyMealPlan
-            {
-                Date = _mealPlanViewModel.SelectedDate,
-                Name = mealPlan.Name
-            };
-
-            // Clear default meal times
-            newMealPlan.MealTimes.Clear();
-
-            // Copy all meal times and items
-            foreach (var mealTime in mealPlan.MealTimes)
-            {
-                var newMealTime = new MealTime(mealTime.Type, mealTime.Type == MealTimeType.Custom ? mealTime.Name : null);
-
-                foreach (var item in mealTime.Items)
-                {
-                    // Create a copy with all properties including Image and Note
-                    var newItem = new MealPlanItem(item.Product, item.Weight)
-                    {
-                        Image = item.Image,
-                        Note = item.Note
-                    };
-                    newMealTime.Items.Add(newItem);
-                }
-
-                newMealPlan.MealTimes.Add(newMealTime);
-            }
+            // Create a deep copy of the meal plan and set it to the selected date
+            var newMealPlan = mealPlan.DeepClone(_mealPlanViewModel.SelectedDate);
 
             // Replace the current meal plan
             _mealPlanViewModel.CurrentMealPlan = newMealPlan;

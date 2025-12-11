@@ -63,10 +63,10 @@ public partial class CatalogViewModel : ViewModelBase
 
     public int PageSize => _databaseService.PageSize;
 
-    public CatalogViewModel()
+    public CatalogViewModel(ProductDetailViewModel productDetailViewModel)
     {
         _databaseService = new DatabaseService();
-        _productDetailViewModel = App.GetMainWindowViewModel().ProductDetailViewModel;
+        _productDetailViewModel = productDetailViewModel ?? throw new ArgumentNullException(nameof(productDetailViewModel));
         _ = InitializeAsync();
     }
 
@@ -97,7 +97,7 @@ public partial class CatalogViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading types: {ex.Message}");
+            Logger.Instance.Error(ex, "Error loading types");
         }
     }
 
@@ -114,7 +114,7 @@ public partial class CatalogViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading labels: {ex.Message}");
+            Logger.Instance.Error(ex, "Error loading labels");
         }
     }
 

@@ -34,7 +34,7 @@
                 <TabItem.Header>
                     <materialIcons:MaterialIcon Kind="BookOpen" Width="24" Height="24" />
                 </TabItem.Header>
-                <views:Catalog />
+                <views:Catalog DataContext="{Binding CatalogViewModel}"/>
             </TabItem>
             <TabItem ToolTip.Tip="Meal Plan" ToolTip.Placement="Right">
                 <TabItem.Header>
