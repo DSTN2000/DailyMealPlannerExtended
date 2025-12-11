@@ -2,26 +2,20 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DailyMealPlannerExtended.Services;
 using DailyMealPlannerExtended.Models;
+using DailyMealPlannerExtended.ViewModels.Base;
 using System.Collections.ObjectModel;
 
 namespace DailyMealPlannerExtended.ViewModels;
 
-public partial class FavoritesViewModel : ViewModelBase
+public partial class FavoritesViewModel : PaginatedViewModelBase
 {
     private readonly FavoriteMealPlansService _favoritesService;
     private readonly MealPlanViewModel? _mealPlanViewModel;
     private readonly AutoSyncService? _autoSyncService;
     private List<(string fileName, DailyMealPlan mealPlan)> _allFavorites = new();
-    private const int PageSize = 10;
 
     [ObservableProperty]
     private ObservableCollection<DailyMealPlan> _currentPageFavorites = new();
-
-    [ObservableProperty]
-    private int _currentPage = 1;
-
-    [ObservableProperty]
-    private int _totalPages = 1;
 
     [ObservableProperty]
     private int _totalFavorites = 0;
@@ -31,6 +25,7 @@ public partial class FavoritesViewModel : ViewModelBase
     public FavoritesViewModel()
     {
         _favoritesService = new FavoriteMealPlansService();
+        PageSize = 10; // Set page size for favorites
         LoadFavorites();
     }
 
@@ -66,7 +61,7 @@ public partial class FavoritesViewModel : ViewModelBase
                 CurrentPage = 1;
             }
 
-            UpdateCurrentPage();
+            OnPageChanged();
             Logger.Instance.Information("Loaded {Count} favorites, {Pages} pages", TotalFavorites, TotalPages);
         }
         catch (Exception ex)
@@ -75,12 +70,10 @@ public partial class FavoritesViewModel : ViewModelBase
         }
     }
 
-    partial void OnCurrentPageChanged(int value)
-    {
-        UpdateCurrentPage();
-    }
-
-    private void UpdateCurrentPage()
+    /// <summary>
+    /// Called by base class when page changes. Updates the displayed favorites for the current page.
+    /// </summary>
+    protected override void OnPageChanged()
     {
         CurrentPageFavorites.Clear();
 
@@ -99,31 +92,6 @@ public partial class FavoritesViewModel : ViewModelBase
         foreach (var favorite in pageFavorites)
         {
             CurrentPageFavorites.Add(favorite);
-        }
-
-        // Notify command CanExecute state
-        OnPropertyChanged(nameof(CanGoToPreviousPage));
-        OnPropertyChanged(nameof(CanGoToNextPage));
-    }
-
-    public bool CanGoToPreviousPage => CurrentPage > 1;
-    public bool CanGoToNextPage => CurrentPage < TotalPages;
-
-    [RelayCommand(CanExecute = nameof(CanGoToPreviousPage))]
-    private void GoToPreviousPage()
-    {
-        if (CurrentPage > 1)
-        {
-            CurrentPage--;
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
-    private void GoToNextPage()
-    {
-        if (CurrentPage < TotalPages)
-        {
-            CurrentPage++;
         }
     }
 

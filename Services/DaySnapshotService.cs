@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using DailyMealPlannerExtended.Models;
+using DailyMealPlannerExtended.Services.Utilities;
 
 namespace DailyMealPlannerExtended.Services;
 
@@ -10,18 +11,7 @@ public class DaySnapshotService
 
     public DaySnapshotService()
     {
-        var dataFolder = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "DailyMealPlanner",
-            "DailyMealPlannerExtended"
-        );
-
-        if (!Directory.Exists(dataFolder))
-        {
-            Directory.CreateDirectory(dataFolder);
-        }
-
-        _databasePath = Path.Combine(dataFolder, "snapshots.db");
+        _databasePath = AppDataPathService.GetDatabasePath("snapshots.db");
         _connectionString = $"Data Source={_databasePath}";
 
         InitializeDatabase();

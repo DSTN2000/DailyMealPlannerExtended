@@ -1,26 +1,16 @@
 using System.Text.Json;
 using DailyMealPlannerExtended.Models;
+using DailyMealPlannerExtended.Services.Utilities;
 
 namespace DailyMealPlannerExtended.Services;
 
 public class UserPreferencesService
 {
-    private static readonly string AppDataFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "DailyMealPlanner",
-        "DailyMealPlannerExtended"
-    );
-
-    private static readonly string PreferencesFilePath = Path.Combine(AppDataFolder, "user_preferences.json");
+    private static readonly string PreferencesFilePath = AppDataPathService.GetFilePath("user_preferences.json");
 
     public UserPreferencesService()
     {
-        // Ensure the app data folder exists
-        if (!Directory.Exists(AppDataFolder))
-        {
-            Directory.CreateDirectory(AppDataFolder);
-            Logger.Instance.Information("Created app data folder: {Folder}", AppDataFolder);
-        }
+        // AppDataPathService automatically ensures the folder exists
     }
 
     public void SavePreferences(User user)
@@ -76,9 +66,12 @@ public class UserPreferencesService
             Height = user.Height,
             Age = user.Age,
             ActivityLevel = user.ActivityLevel,
-            ProteinPercentage = user.NutrientsSplit.p,
-            FatPercentage = user.NutrientsSplit.f,
-            CarbsPercentage = user.NutrientsSplit.c
+            NutrientsSplit = new NutrientsSplitData
+            {
+                Protein = user.NutrientsSplit.p,
+                Fat = user.NutrientsSplit.f,
+                Carbs = user.NutrientsSplit.c
+            }
         };
 
         return JsonSerializer.Serialize(preferences, new JsonSerializerOptions
@@ -91,7 +84,7 @@ public class UserPreferencesService
     {
         var preferences = JsonSerializer.Deserialize<UserPreferencesData>(json);
 
-        if (preferences == null)
+        if (preferences == null || preferences.NutrientsSplit == null)
         {
             return null;
         }
@@ -102,7 +95,7 @@ public class UserPreferencesService
             Height = preferences.Height,
             Age = preferences.Age,
             ActivityLevel = preferences.ActivityLevel,
-            NutrientsSplit = (preferences.ProteinPercentage, preferences.FatPercentage, preferences.CarbsPercentage)
+            NutrientsSplit = (preferences.NutrientsSplit.Protein, preferences.NutrientsSplit.Fat, preferences.NutrientsSplit.Carbs)
         };
 
         return user;
@@ -111,11 +104,30 @@ public class UserPreferencesService
 
 public class UserPreferencesData
 {
+    [System.Text.Json.Serialization.JsonPropertyName("weight")]
     public double Weight { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("height")]
     public double Height { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("age")]
     public double Age { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("activityLevel")]
     public ActivityLevel ActivityLevel { get; set; }
-    public double ProteinPercentage { get; set; }
-    public double FatPercentage { get; set; }
-    public double CarbsPercentage { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("nutrientsSplit")]
+    public NutrientsSplitData? NutrientsSplit { get; set; }
+}
+
+public class NutrientsSplitData
+{
+    [System.Text.Json.Serialization.JsonPropertyName("protein")]
+    public double Protein { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("fat")]
+    public double Fat { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("carbs")]
+    public double Carbs { get; set; }
 }

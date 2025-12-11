@@ -206,7 +206,7 @@
                 <StackPanel Orientation="Horizontal"
                            HorizontalAlignment="Center"
                            Spacing="8">
-                    <Button Command="{Binding PreviousPageCommand}"
+                    <Button Command="{Binding GoToPreviousPageCommand}"
                            CornerRadius="12"
                            Padding="12,8">
                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -221,13 +221,13 @@
                            Padding="12,8">
                         <TextBlock>
                             <Run Text="Page"/>
-                            <Run Text="{Binding CurrentPageDisplay}" FontWeight="SemiBold"/>
+                            <Run Text="{Binding CurrentPage}" FontWeight="SemiBold"/>
                             <Run Text="of"/>
                             <Run Text="{Binding TotalPages}" FontWeight="SemiBold"/>
                         </TextBlock>
                     </Border>
 
-                    <Button Command="{Binding NextPageCommand}"
+                    <Button Command="{Binding GoToNextPageCommand}"
                            CornerRadius="12"
                            Padding="12,8">
                         <StackPanel Orientation="Horizontal" Spacing="4">

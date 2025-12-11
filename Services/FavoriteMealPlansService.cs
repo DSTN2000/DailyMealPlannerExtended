@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Microsoft.Data.Sqlite;
 using DailyMealPlannerExtended.Models;
+using DailyMealPlannerExtended.Services.Utilities;
 
 namespace DailyMealPlannerExtended.Services;
 
@@ -11,18 +12,7 @@ public class FavoriteMealPlansService
 
     public FavoriteMealPlansService()
     {
-        var dataFolder = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "DailyMealPlanner",
-            "DailyMealPlannerExtended"
-        );
-
-        if (!Directory.Exists(dataFolder))
-        {
-            Directory.CreateDirectory(dataFolder);
-        }
-
-        _databasePath = Path.Combine(dataFolder, "favorites.db");
+        _databasePath = AppDataPathService.GetDatabasePath("favorites.db");
         _connectionString = $"Data Source={_databasePath}";
 
         InitializeDatabase();

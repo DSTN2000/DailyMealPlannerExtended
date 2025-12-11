@@ -381,19 +381,7 @@ public class AutoSyncService
                 return;
             }
 
-            var prefsJson = JsonSerializer.Serialize(new
-            {
-                weight = localPrefs.Weight,
-                height = localPrefs.Height,
-                age = localPrefs.Age,
-                activityLevel = localPrefs.ActivityLevel.ToString(),
-                nutrientsSplit = new
-                {
-                    protein = localPrefs.NutrientsSplit.p,
-                    fat = localPrefs.NutrientsSplit.f,
-                    carbs = localPrefs.NutrientsSplit.c
-                }
-            });
+            var prefsJson = UserPreferencesService.SerializeUserToJson(localPrefs);
 
             var existingPrefs = await client
                 .From<UserPreferencesRecord>()

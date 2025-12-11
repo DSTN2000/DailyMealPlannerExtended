@@ -2,25 +2,19 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DailyMealPlannerExtended.Services;
 using DailyMealPlannerExtended.Models;
+using DailyMealPlannerExtended.ViewModels.Base;
 using System.Collections.ObjectModel;
 
 namespace DailyMealPlannerExtended.ViewModels;
 
-public partial class DiscoverViewModel : ViewModelBase
+public partial class DiscoverViewModel : PaginatedViewModelBase
 {
     private readonly SupabaseDiscoverService? _discoverService;
     private readonly FavoriteMealPlansService _favoritesService;
     private readonly MealPlanViewModel? _mealPlanViewModel;
-    private const int PageSize = 10;
 
     [ObservableProperty]
     private ObservableCollection<DailyMealPlan> _currentPageMealPlans = new();
-
-    [ObservableProperty]
-    private int _currentPage = 1;
-
-    [ObservableProperty]
-    private int _totalPages = 1;
 
     [ObservableProperty]
     private int _totalMealPlans = 0;
@@ -41,6 +35,7 @@ public partial class DiscoverViewModel : ViewModelBase
     public DiscoverViewModel()
     {
         _favoritesService = new FavoriteMealPlansService();
+        PageSize = 10; // Set page size for discover
     }
 
     public DiscoverViewModel(MealPlanViewModel mealPlanViewModel, SupabaseAuthService? authService) : this()
@@ -93,7 +88,7 @@ public partial class DiscoverViewModel : ViewModelBase
                 CurrentPage = 1;
             }
 
-            UpdateCurrentPage();
+            OnPageChanged();
 
             StatusMessage = TotalMealPlans > 0
                 ? $"Loaded {TotalMealPlans} shared meal plans"
@@ -112,12 +107,10 @@ public partial class DiscoverViewModel : ViewModelBase
         }
     }
 
-    partial void OnCurrentPageChanged(int value)
-    {
-        UpdateCurrentPage();
-    }
-
-    private void UpdateCurrentPage()
+    /// <summary>
+    /// Called by base class when page changes. Updates the displayed meal plans for the current page.
+    /// </summary>
+    protected override void OnPageChanged()
     {
         CurrentPageMealPlans.Clear();
 
@@ -135,31 +128,6 @@ public partial class DiscoverViewModel : ViewModelBase
         foreach (var mealPlan in pageMealPlans)
         {
             CurrentPageMealPlans.Add(mealPlan);
-        }
-
-        // Notify command CanExecute state
-        OnPropertyChanged(nameof(CanGoToPreviousPage));
-        OnPropertyChanged(nameof(CanGoToNextPage));
-    }
-
-    public bool CanGoToPreviousPage => CurrentPage > 1;
-    public bool CanGoToNextPage => CurrentPage < TotalPages;
-
-    [RelayCommand(CanExecute = nameof(CanGoToPreviousPage))]
-    private void GoToPreviousPage()
-    {
-        if (CurrentPage > 1)
-        {
-            CurrentPage--;
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
-    private void GoToNextPage()
-    {
-        if (CurrentPage < TotalPages)
-        {
-            CurrentPage++;
         }
     }
 
@@ -195,7 +163,7 @@ public partial class DiscoverViewModel : ViewModelBase
 
                     // Re-sort the list by likes count
                     _allMealPlans = _allMealPlans.OrderByDescending(m => m.LikesCount).ToList();
-                    UpdateCurrentPage();
+                    OnPageChanged();
                 }
             }
             else
@@ -219,7 +187,7 @@ public partial class DiscoverViewModel : ViewModelBase
 
                     // Re-sort the list by likes count
                     _allMealPlans = _allMealPlans.OrderByDescending(m => m.LikesCount).ToList();
-                    UpdateCurrentPage();
+                    OnPageChanged();
                 }
             }
         }

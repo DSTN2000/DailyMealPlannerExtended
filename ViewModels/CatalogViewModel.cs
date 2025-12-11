@@ -5,12 +5,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DailyMealPlannerExtended.Services;
 using DailyMealPlannerExtended.Models;
+using DailyMealPlannerExtended.ViewModels.Base;
 using System;
 using System.Linq;
 
 namespace DailyMealPlannerExtended.ViewModels;
 
-public partial class CatalogViewModel : ViewModelBase
+public partial class CatalogViewModel : PaginatedViewModelBase
 {
     private readonly DatabaseService _databaseService;
     private CancellationTokenSource? _searchDebounceCts;
@@ -43,25 +44,8 @@ public partial class CatalogViewModel : ViewModelBase
     [ObservableProperty]
     private int _totalCount;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CurrentPageDisplay))]
-    private int _currentPage;
-
-    [ObservableProperty]
-    private int _totalPages;
-
-    // Display page numbers starting from 1 instead of 0
-    public int CurrentPageDisplay => CurrentPage + 1;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(PreviousPageCommand))]
-    private bool _hasPreviousPage;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(NextPageCommand))]
-    private bool _hasNextPage;
-
-    public int PageSize => _databaseService.PageSize;
+    // PageSize is exposed from base class, but DatabaseService determines actual size
+    public new int PageSize => _databaseService.PageSize;
 
     public CatalogViewModel(ProductDetailViewModel productDetailViewModel)
     {
@@ -121,7 +105,7 @@ public partial class CatalogViewModel : ViewModelBase
     [RelayCommand]
     private async Task SearchAsync()
     {
-        CurrentPage = 0;
+        CurrentPage = 1; // Reset to first page (1-based indexing)
         await LoadProductsAsync();
     }
 
@@ -130,13 +114,16 @@ public partial class CatalogViewModel : ViewModelBase
         IsLoading = true;
         try
         {
+            // DatabaseService uses 0-based indexing, so convert from 1-based
+            int dbPage = CurrentPage - 1;
+
             var (products, totalCount) = await Task.Run(async () =>
             {
                 var result = await _databaseService.SearchProductsAsync(
                     searchText: SearchText,
                     type: SelectedType,
                     labels: SelectedLabels.ToList(),
-                    page: CurrentPage
+                    page: dbPage
                 );
                 token.ThrowIfCancellationRequested();
                 return result;
@@ -148,22 +135,8 @@ public partial class CatalogViewModel : ViewModelBase
                 Products.Add(product);
             }
 
-            // For search queries, the total count should reflect actual matches
-            if (!string.IsNullOrWhiteSpace(SearchText))
-            {
-                // When searching, we fetch PageSize * 10, filter by relevance, then paginate
-                // So the total is based on the pre-filtered count
-                TotalCount = totalCount;
-                TotalPages = (int)Math.Ceiling((double)totalCount / PageSize);
-            }
-            else
-            {
-                TotalCount = totalCount;
-                TotalPages = (int)Math.Ceiling((double)totalCount / PageSize);
-            }
-
-            HasPreviousPage = CurrentPage > 0;
-            HasNextPage = CurrentPage < TotalPages - 1;
+            TotalCount = totalCount;
+            TotalPages = (int)Math.Ceiling((double)totalCount / PageSize);
         }
         catch (OperationCanceledException)
         {
@@ -179,34 +152,12 @@ public partial class CatalogViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand(CanExecute = nameof(HasPreviousPage))]
-    private async Task PreviousPageAsync()
+    /// <summary>
+    /// Called by base class when page changes. Loads products for the new page.
+    /// </summary>
+    protected override void OnPageChanged()
     {
-        if (CurrentPage > 0)
-        {
-            CurrentPage--;
-            await LoadProductsAsync();
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(HasNextPage))]
-    private async Task NextPageAsync()
-    {
-        if (CurrentPage < TotalPages - 1)
-        {
-            CurrentPage++;
-            await LoadProductsAsync();
-        }
-    }
-
-    [RelayCommand]
-    private async Task GoToPageAsync(int page)
-    {
-        if (page >= 0 && page < TotalPages)
-        {
-            CurrentPage = page;
-            await LoadProductsAsync();
-        }
+        _ = LoadProductsAsync();
     }
 
     [RelayCommand]
@@ -259,7 +210,7 @@ public partial class CatalogViewModel : ViewModelBase
 
             await Task.Delay(300, token);
 
-            CurrentPage = 0;
+            CurrentPage = 1; // Reset to first page (1-based indexing)
             await LoadProductsAsync(token);
         }
         catch (OperationCanceledException)
