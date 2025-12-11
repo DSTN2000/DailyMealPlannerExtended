@@ -10,6 +10,7 @@ public partial class AddToMealPlanViewModel : ViewModelBase
     private readonly MealPlanViewModel _mealPlanViewModel;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CurrentServings))]
     private Product? _product;
 
     [ObservableProperty]
@@ -19,6 +20,7 @@ public partial class AddToMealPlanViewModel : ViewModelBase
     private MealTime? _selectedMealTime;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CurrentServings))]
     private double _weight = 100.0;
 
     public ObservableCollection<MealTime> AvailableMealTimes => _mealPlanViewModel.CurrentMealPlan.MealTimes;
@@ -94,13 +96,4 @@ public partial class AddToMealPlanViewModel : ViewModelBase
         IsVisible = true;
     }
 
-    partial void OnWeightChanged(double value)
-    {
-        OnPropertyChanged(nameof(CurrentServings));
-    }
-
-    partial void OnProductChanged(Product? value)
-    {
-        OnPropertyChanged(nameof(CurrentServings));
-    }
 }

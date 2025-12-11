@@ -25,12 +25,25 @@ public partial class ProductDetailViewModel : ViewModelBase
     private bool _isVisible;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CurrentWeight))]
+    [NotifyPropertyChangedFor(nameof(CurrentServings))]
+    [NotifyPropertyChangedFor(nameof(PhotoButtonText))]
+    [NotifyPropertyChangedFor(nameof(ShowNoteReadOnly))]
     private MealPlanItem? _mealPlanItem;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowAddToMealPlanButton))]
+    [NotifyPropertyChangedFor(nameof(ShowWeightControls))]
+    [NotifyPropertyChangedFor(nameof(IsWeightEditable))]
+    [NotifyPropertyChangedFor(nameof(ShowImageAndNote))]
+    [NotifyPropertyChangedFor(nameof(ShowNoteReadOnly))]
+    [NotifyPropertyChangedFor(nameof(CurrentWeight))]
+    [NotifyPropertyChangedFor(nameof(CurrentServings))]
+    [NotifyPropertyChangedFor(nameof(CanGenerateImage))]
     private ProductDetailMode _mode = ProductDetailMode.Catalog;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanGenerateImage))]
     private bool _isGeneratingImage;
 
     public bool CanGenerateImage => Mode == ProductDetailMode.EditMealItem && !IsGeneratingImage && _aiService.IsConfigured();
@@ -48,9 +61,6 @@ public partial class ProductDetailViewModel : ViewModelBase
         {
             newValue.PropertyChanged += MealPlanItem_PropertyChanged;
         }
-
-        OnPropertyChanged(nameof(PhotoButtonText));
-        OnPropertyChanged(nameof(ShowNoteReadOnly));
     }
 
     private void MealPlanItem_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -206,7 +216,6 @@ public partial class ProductDetailViewModel : ViewModelBase
         try
         {
             IsGeneratingImage = true;
-            OnPropertyChanged(nameof(CanGenerateImage));
 
             Logger.Instance.Information("Generating AI image for: {Product}", Product.Name);
 
@@ -246,7 +255,6 @@ public partial class ProductDetailViewModel : ViewModelBase
         finally
         {
             IsGeneratingImage = false;
-            OnPropertyChanged(nameof(CanGenerateImage));
         }
     }
 
@@ -265,7 +273,6 @@ public partial class ProductDetailViewModel : ViewModelBase
         MealPlanItem = null;
         Mode = ProductDetailMode.Catalog;
         IsVisible = true;
-        NotifyModeChanged();
     }
 
     public void ShowMealPlanItem(MealPlanItem item, bool isEditable)
@@ -274,7 +281,6 @@ public partial class ProductDetailViewModel : ViewModelBase
         Product = item.Product;
         Mode = isEditable ? ProductDetailMode.EditMealItem : ProductDetailMode.ViewMealItem;
         IsVisible = true;
-        NotifyModeChanged();
     }
 
     partial void OnMealPlanItemChanged(MealPlanItem? value)
@@ -292,22 +298,6 @@ public partial class ProductDetailViewModel : ViewModelBase
         }
     }
 
-    partial void OnModeChanged(ProductDetailMode value)
-    {
-        NotifyModeChanged();
-    }
-
-    private void NotifyModeChanged()
-    {
-        OnPropertyChanged(nameof(ShowAddToMealPlanButton));
-        OnPropertyChanged(nameof(ShowWeightControls));
-        OnPropertyChanged(nameof(IsWeightEditable));
-        OnPropertyChanged(nameof(ShowImageAndNote));
-        OnPropertyChanged(nameof(ShowNoteReadOnly));
-        OnPropertyChanged(nameof(CurrentWeight));
-        OnPropertyChanged(nameof(CurrentServings));
-        OnPropertyChanged(nameof(CanGenerateImage));
-    }
 
     private async Task<byte[]> ResizeImageAsync(byte[] imageBytes, int maxHeight)
     {

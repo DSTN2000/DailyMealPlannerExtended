@@ -19,9 +19,25 @@ public partial class MealPlanViewModel : ViewModelBase
     private DateTime _selectedDate = DateTime.Today;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CaloriesProgress))]
+    [NotifyPropertyChangedFor(nameof(ProteinProgress))]
+    [NotifyPropertyChangedFor(nameof(FatProgress))]
+    [NotifyPropertyChangedFor(nameof(CarbsProgress))]
+    [NotifyPropertyChangedFor(nameof(CaloriesProgressColor))]
+    [NotifyPropertyChangedFor(nameof(ProteinProgressColor))]
+    [NotifyPropertyChangedFor(nameof(FatProgressColor))]
+    [NotifyPropertyChangedFor(nameof(CarbsProgressColor))]
     private DailyMealPlan _currentMealPlan;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CaloriesProgress))]
+    [NotifyPropertyChangedFor(nameof(ProteinProgress))]
+    [NotifyPropertyChangedFor(nameof(FatProgress))]
+    [NotifyPropertyChangedFor(nameof(CarbsProgress))]
+    [NotifyPropertyChangedFor(nameof(CaloriesProgressColor))]
+    [NotifyPropertyChangedFor(nameof(ProteinProgressColor))]
+    [NotifyPropertyChangedFor(nameof(FatProgressColor))]
+    [NotifyPropertyChangedFor(nameof(CarbsProgressColor))]
     private User _user;
 
     [ObservableProperty]
@@ -174,9 +190,6 @@ public partial class MealPlanViewModel : ViewModelBase
             value.PropertyChanged += CurrentMealPlan_PropertyChanged;
         }
 
-        // Update all progress properties
-        NotifyProgressChanged();
-
         // Update favorite status
         UpdateFavoriteStatus();
     }
@@ -188,9 +201,6 @@ public partial class MealPlanViewModel : ViewModelBase
         {
             value.PropertyChanged += User_PropertyChanged;
         }
-
-        // Update all progress properties
-        NotifyProgressChanged();
     }
 
     private void SubscribeToPropertyChanges()
