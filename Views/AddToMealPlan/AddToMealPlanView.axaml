@@ -67,9 +67,11 @@
                                   FontWeight="SemiBold"/>
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBox Grid.Column="0"
+                                    x:Name="WeightTextBox"
                                     Text="{Binding Weight, Mode=TwoWay}"
                                     Watermark="100"
-                                    Margin="0,0,8,0"/>
+                                    Margin="0,0,8,0"
+                                    PropertyChanged="WeightTextBox_PropertyChanged"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding Product.Unit}"
                                       FontSize="14"

@@ -4,8 +4,6 @@ namespace DailyMealPlannerExtended.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    public string Greeting { get; } = "Welcome to Avalonia!";
-
     public MealPlanViewModel MealPlanViewModel { get; }
     public FavoritesViewModel FavoritesViewModel { get; }
     public DiscoverViewModel DiscoverViewModel { get; }

@@ -11,21 +11,31 @@ public partial class AddToMealPlanViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentServings))]
+    [NotifyCanExecuteChangedFor(nameof(AddCommand))]
     private Product? _product;
 
     [ObservableProperty]
     private bool _isVisible;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AddCommand))]
     private MealTime? _selectedMealTime;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentServings))]
+    [NotifyPropertyChangedFor(nameof(IsWeightValid))]
+    [NotifyCanExecuteChangedFor(nameof(AddCommand))]
     private double _weight = 100.0;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AddCommand))]
+    private bool _isWeightTextValid = true;
 
     public ObservableCollection<MealTime> AvailableMealTimes => _mealPlanViewModel.CurrentMealPlan.MealTimes;
 
     public double CurrentServings => Product?.Serving > 0 ? Weight / Product.Serving : 0;
+
+    public bool IsWeightValid => Weight >= MealPlanItem.MinWeight && Weight <= MealPlanItem.MaxWeight;
 
     public AddToMealPlanViewModel(MealPlanViewModel mealPlanViewModel)
     {
@@ -52,7 +62,7 @@ public partial class AddToMealPlanViewModel : ViewModelBase
         Weight = 100.0;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanAdd))]
     private void Add()
     {
         if (Product == null || SelectedMealTime == null) return;
@@ -65,6 +75,8 @@ public partial class AddToMealPlanViewModel : ViewModelBase
 
         Close();
     }
+
+    private bool CanAdd() => Product != null && SelectedMealTime != null && IsWeightValid && IsWeightTextValid;
 
     [RelayCommand]
     private void IncrementServing()
