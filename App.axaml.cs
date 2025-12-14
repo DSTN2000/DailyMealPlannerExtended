@@ -47,6 +47,14 @@ public partial class App : Application
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
 
+            // Ensure OpenNutrition database exists (download if needed)
+            var dbInitService = new DatabaseInitializationService();
+            var dbReady = await dbInitService.EnsureDatabaseExistsAsync();
+            if (!dbReady)
+            {
+                Logger.Instance.Error("Failed to initialize OpenNutrition database. Some features may not work.");
+            }
+
             // Check if Supabase is configured
             if (SupabaseConfig.IsConfigured())
             {
