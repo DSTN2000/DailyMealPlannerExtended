@@ -4,16 +4,46 @@ using Avalonia.Interactivity;
 using DailyMealPlannerExtended.ViewModels;
 using DailyMealPlannerExtended.Views.Toasts;
 using DailyMealPlannerExtended.Models;
+using DailyMealPlannerExtended.Services.Utilities;
 using ToastNotificationAvalonia.Manager;
 
 namespace DailyMealPlannerExtended.Views.MealPlan;
 
 public partial class MealPlanView : UserControl
 {
+    private MealPlanViewModel? _viewModel;
+
     public MealPlanView()
     {
         InitializeComponent();
         // DataContext will be set by MainWindow
+
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (DataContext is MealPlanViewModel viewModel && _viewModel != viewModel)
+        {
+            // Unsubscribe from previous ViewModel if any
+            if (_viewModel != null)
+            {
+                _viewModel.DuplicateMealPlanDetected -= OnDuplicateMealPlanDetected;
+                Logger.Instance.Debug("Unsubscribed from previous MealPlanViewModel");
+            }
+
+            // Subscribe to new ViewModel
+            _viewModel = viewModel;
+            _viewModel.DuplicateMealPlanDetected += OnDuplicateMealPlanDetected;
+            Logger.Instance.Debug("Subscribed to MealPlanViewModel.DuplicateMealPlanDetected event");
+        }
+    }
+
+    private async void OnDuplicateMealPlanDetected(object? sender, string message)
+    {
+        Logger.Instance.Information("OnDuplicateMealPlanDetected called with message: {Message}", message);
+        await ToastManager.ShowToastAsync(new ErrorToast(message));
+        Logger.Instance.Information("Toast shown successfully");
     }
 
     private void MealPlanView_PointerPressed(object? sender, PointerPressedEventArgs e)

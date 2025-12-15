@@ -51,8 +51,8 @@ public class SupabaseDiscoverService
 
             if (existing.Models.Count > 0)
             {
-                Logger.Instance.Information("Meal plan already shared");
-                return true;
+                Logger.Instance.Information("Meal plan already shared - duplicate detected");
+                throw new InvalidOperationException("This meal plan has already been shared to Discover.");
             }
 
             var newRecord = new SharedMealPlanRecord
@@ -78,6 +78,11 @@ public class SupabaseDiscoverService
 
             Logger.Instance.Information("Shared meal plan '{Name}' to discover feed", mealPlan.Name);
             return true;
+        }
+        catch (InvalidOperationException)
+        {
+            // Re-throw InvalidOperationException so it can be handled by the caller (ViewModel)
+            throw;
         }
         catch (Exception ex)
         {

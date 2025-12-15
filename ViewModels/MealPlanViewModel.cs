@@ -15,6 +15,8 @@ public partial class MealPlanViewModel : ViewModelBase
     private readonly SupabaseDiscoverService? _discoverService;
     private readonly AutoSyncService? _autoSyncService;
 
+    public event EventHandler<string>? DuplicateMealPlanDetected;
+
     [ObservableProperty]
     private DateTime _selectedDate = DateTime.Today;
 
@@ -558,6 +560,13 @@ public partial class MealPlanViewModel : ViewModelBase
             {
                 Logger.Instance.Warning("Failed to share meal plan: {Name}", CurrentMealPlan.Name);
             }
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("already been shared"))
+        {
+            // Duplicate meal plan detected
+            Logger.Instance.Information("Duplicate meal plan detected, invoking event. Message: {Message}", ex.Message);
+            DuplicateMealPlanDetected?.Invoke(this, ex.Message);
+            Logger.Instance.Information("Event invoked. Subscribers: {Count}", DuplicateMealPlanDetected?.GetInvocationList().Length ?? 0);
         }
         catch (Exception ex)
         {
